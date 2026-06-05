@@ -2,6 +2,8 @@ from flask import Flask
 from extensions import db, cors, jwt
 from config import Config
 
+from models import *
+
 app = Flask("app")
 app.config.from_object(Config)
 
