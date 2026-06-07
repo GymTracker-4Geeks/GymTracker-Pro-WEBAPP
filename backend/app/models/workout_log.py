@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Float
-from extensions import db
+from app.extensions import db
 
 class WorkoutLog(db.Model):
     __tablename__ = "workout_logs"
