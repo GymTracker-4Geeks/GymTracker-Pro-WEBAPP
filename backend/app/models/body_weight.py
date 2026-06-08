@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Float
 from datetime import datetime, UTC
+
 from app.extensions import db
 
 class BodyWeight(db.Model):

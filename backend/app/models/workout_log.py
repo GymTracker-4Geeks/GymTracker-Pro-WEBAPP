@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Float
+
 from app.extensions import db
 
 class WorkoutLog(db.Model):

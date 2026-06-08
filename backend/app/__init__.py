@@ -13,4 +13,8 @@ def create_app():
     migrate.init_app(app, db)
     cors.init_app(app, origins=["http://localhost:5173"])
 
+    from .routes.auth import auth_bp
+
+    app.register_blueprint(auth_bp, url_prefix="/api/auth")
+
     return app

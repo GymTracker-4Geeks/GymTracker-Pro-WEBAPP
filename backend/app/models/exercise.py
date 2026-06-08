@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, String
 from typing import List
+
 from app.extensions import db
 
 class Exercise(db.Model):

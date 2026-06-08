@@ -1,6 +1,10 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import String
+from typing import Optional
 from datetime import datetime, UTC
+import secrets
+
 from app.extensions import db
 
 class User(db.Model):
@@ -13,6 +17,8 @@ class User(db.Model):
     role: Mapped[str] = mapped_column(String(50))
     created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC))
 
+    token_password_reset: Mapped[Optional[str]] = mapped_column(String(100))
+
     trainer: Mapped["Trainer"] = relationship(
         back_populates="user",
         uselist=False,
@@ -24,6 +30,16 @@ class User(db.Model):
         uselist=False,
         cascade="all, delete-orphan"
     )
+
+    def generate_reset_token(self):
+        self.token_password_reset = secrets.token_hex(16)
+        return self.token_password_reset
+
+    def check_password(self, password_hash, password):
+        return check_password_hash(password_hash, password)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
 
     def to_dict(self):
         return {
