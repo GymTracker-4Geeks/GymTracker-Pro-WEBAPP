@@ -51,3 +51,5 @@ class Client(db.Model):
             "user_id": self.user_id,
             "trainer_id": self.trainer_id
         }
+    
+    

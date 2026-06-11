@@ -42,3 +42,5 @@ class Diet(db.Model):
             "name_diet": self.name_diet,
             "goal_diet": self.goal_diet
         }
+    
+    

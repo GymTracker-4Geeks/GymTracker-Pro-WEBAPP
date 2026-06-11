@@ -35,3 +35,5 @@ class Routine(db.Model):
             "description": self.description,
             "trainer_id": self.trainer_id
         }
+    
+    

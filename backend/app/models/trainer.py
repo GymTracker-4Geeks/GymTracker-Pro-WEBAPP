@@ -27,7 +27,8 @@ class Trainer(db.Model):
     )
 
     diets: Mapped[List["Diet"]] = relationship(
-        back_populates="trainer"
+        back_populates="trainer",
+        cascade="all, delete-orphan"
     )
 
     def to_dict(self):
