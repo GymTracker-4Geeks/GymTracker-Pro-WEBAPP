@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Float
-
+from datetime import datetime, UTC
 from app.extensions import db
 
 class WorkoutLog(db.Model):
@@ -13,6 +13,7 @@ class WorkoutLog(db.Model):
     exercise_id: Mapped[int] = mapped_column(
         ForeignKey("exercises.id")
     )
+    recorded_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC))
     weight: Mapped[float] = mapped_column(Float)
     reps: Mapped[int] = mapped_column()
     
