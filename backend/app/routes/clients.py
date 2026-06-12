@@ -2,6 +2,8 @@ from flask import Blueprint, jsonify, request
 from models.client import Client
 from models.user import User
 from models.trainer import Trainer
+from models.routine import Routine
+from models.client_routine import ClientRoutine
 from app.extensions import db
 
 
@@ -92,3 +94,69 @@ def create_clients():
     return jsonify(new_client.to_dict()), 201
 
     
+@clients_bp.route("/clients/<int:client_id>/routines", methods=["POST"])
+def assign_routine(client_id):
+    data =  request.get_json()
+    routine_id = data.get("routine_id")
+    client = Client.query.get(client_id)
+
+    if client is None: 
+        return jsonify(
+            {
+            "msg":"cliente no encontrado"
+            }
+        ), 404
+    
+    routine = Routine.query.get(routine_id)
+
+    if routine is None: 
+        return jsonify(
+            {
+            "msg":"La rutina no existe"
+            }
+        ), 404
+    
+    existing_assignment = ClientRoutine.query.filter_by(
+        client_id=client_id,
+        routine_id=routine_id
+    ).first
+
+    if existing_assignment:
+        return jsonify(
+            {
+            "msg": "La rutina ya ha sido asignada"
+            }
+        ), 409
+
+    new_assignment = ClientRoutine(
+        client_id=client_id,
+        routine_id=routine_id
+    )
+
+    db.session.add(new_assignment)
+    db.session.commit()
+
+    return jsonify(
+        {
+        "msg": "Rutina asignada con exito"
+        }
+    ), 201
+
+@clients_bp.route("/clients/<int:client_id>/routines", methods=["GET"])
+def get_client_routines(client_id):
+
+    client = Client.query.get(client_id)
+
+    if client is None: 
+        return jsonify(
+            {
+            "msg":"cliente no encontrado"
+            }
+        ), 404
+
+    routines_data = [
+        assignment.routine.to_dict()
+        for assignment in client.client_routines
+    ]
+
+    return jsonify(routines_data), 200
