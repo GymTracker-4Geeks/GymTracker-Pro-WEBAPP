@@ -160,3 +160,29 @@ def get_client_routines(client_id):
     ]
 
     return jsonify(routines_data), 200
+
+@clients_bp.route("/clients/<int:client_id>/routines/<int:routine_id>", methods=["DELETE"])
+def remove_routine(client_id, routine_id):
+
+    assignment = ClientRoutine.query.filter_by(
+        client_id=client_id,
+        routine_id=routine_id
+    ).first()
+
+    if assignment is None:
+        return jsonify(
+            {
+            "msg":"Rutina no asignada al cliente."
+            }
+        ), 404
+    
+    db.session.delete(assignment)
+    db.session.commit
+
+    return jsonify(
+        {
+        "msg":"Rutina desasignada con exito"
+        }
+    ), 200
+
+    
