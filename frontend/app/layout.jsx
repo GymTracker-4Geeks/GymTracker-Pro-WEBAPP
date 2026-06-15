@@ -1,4 +1,4 @@
-import { Autentificador } from '../components/Autentificacion';
+import { ProveedorAutentificacion } from '@/components/Autentificacion';
 import './globals.css'; 
 
 export const metadata = {
@@ -10,9 +10,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body className="min-h-full flex flex-col">
-        <ProveedorAutentificador>
+        <ProveedorAutentificacion>
           {children}
-        </ProveedorAutentificador>
+        </ProveedorAutentificacion>
       </body>
     </html>
   );

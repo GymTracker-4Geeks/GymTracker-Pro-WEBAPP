@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Register() {
-  const [name, setName] = useState('');
+  const [full_name, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [confirm_password, setConfirmPassword] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('client'); 
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   
@@ -19,13 +19,13 @@ export default function Register() {
     setSuccess(false);
 
     try {
-      const respuesta = await fetch('http://127.0.0.1:5000/v1/register', {
+      const respuesta = await fetch('http://127.0.0.1:5000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         
-        body: JSON.stringify({ name, email, password, role }), 
+        body: JSON.stringify({ full_name, email, password, confirm_password }), 
       });
 
       if (!respuesta.ok) {
@@ -70,8 +70,8 @@ export default function Register() {
           <label className="text-gray-700 text-sm font-semibold">Nombre completo</label>
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={full_name}
+            onChange={(e) => setFullName(e.target.value)}
             className="border border-gray-300 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             placeholder="Ej. Juan Pérez"
             required
@@ -103,16 +103,17 @@ export default function Register() {
           />
         </div>
 
-        <div className="flex flex-col gap-1 mb-2">
-          <label className="text-gray-700 text-sm font-semibold">¿Qué eres?</label>
-          <select 
-            value={role} 
-            onChange={(e) => setRole(e.target.value)}
-            className="border border-gray-300 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white"
-          >
-            <option value="client">Cliente</option>
-            <option value="trainer">Entrenador</option>
-          </select>
+        <div className="flex flex-col gap-1">
+          <label className="text-gray-700 text-sm font-semibold">Confirmar Contraseña</label>
+          <input
+            type="password"
+            value={confirm_password}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="border border-gray-300 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            placeholder="••••••••"
+            required
+            minLength={6}
+          />
         </div>
 
         <button
