@@ -1,19 +1,19 @@
-import { Autentificador } from '../components/Autentificacion';
-import './globals.css'; 
+import { ProveedorAutentificacion } from "@/context/AuthContext";
+import "./globals.css";
 
 export const metadata = {
-  title: 'GymTracker Pro',
-  description: 'Plataforma integral de gestión para entrenadores y clientes',
+    title: "GymTracker Pro",
+    description: "Plataforma de Gestión para entrenadores y clientes",
 };
 
-export default function RootLayout({ children }) {
-  return (
-    <html lang="es">
-      <body className="min-h-full flex flex-col">
-        <ProveedorAutentificador>
-          {children}
-        </ProveedorAutentificador>
-      </body>
-    </html>
-  );
+export default function AppLayout({ children }) {
+    return (
+        <html lang="es">
+            <body className="min-h-full flex flex-col">
+                <ProveedorAutentificacion>
+                    {children}
+                </ProveedorAutentificacion>
+            </body>
+        </html>
+    );
 }
