@@ -23,6 +23,11 @@ class Routine(db.Model):
         cascade="all, delete-orphan"
     )
 
+    clients: Mapped[List["ClientRoutine"]] = relationship(
+        back_populates="routine",
+        cascade="all, delete-orphan"
+    )
+
     def to_dict(self):
         return {
             "id": self.id,
