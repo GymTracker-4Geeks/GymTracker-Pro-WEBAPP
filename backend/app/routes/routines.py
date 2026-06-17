@@ -20,6 +20,9 @@ def get_routine():
     if not client:
         return jsonify({"error": "Client not found"}), 404
     
+    if not client.routines:
+        return jsonify({"routines": None}), 200
+    
     client_data = client.to_dict()
 
     client_data["routines"] = [item.routine.to_dict() for item in client.routines if item.routine]
