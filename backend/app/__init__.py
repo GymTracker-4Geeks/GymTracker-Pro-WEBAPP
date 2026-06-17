@@ -11,12 +11,16 @@ def create_app():
     db.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app, origins=["http://localhost:3000"])
+    cors.init_app(
+        app,
+        resources={r"/api/*": {"origins": "http://localhost:3000"}},
+        supports_credentials=True,
+    )
 
     from .routes.auth import auth_bp
     from .routes.clients import clients_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
-    app.register_blueprint(clients_bp, url_prefix="/api/client")
+    app.register_blueprint(clients_bp, url_prefix="/api/clients")
 
     return app

@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy import select
 
-from app.models import User
+from app.models import User, Client
 from app.extensions import db
 from app.services import EmailService
 from app.utils import validate_fields
@@ -33,6 +33,11 @@ def register():
     user.set_password(data.get("password"))
 
     db.session.add(user)
+    db.session.flush()
+
+    client = Client(user_id=user.id)
+
+    db.session.add(client)
     db.session.commit()
 
     # EmailService.send_welcome_email(data.get("email"), data.get("full_name"))

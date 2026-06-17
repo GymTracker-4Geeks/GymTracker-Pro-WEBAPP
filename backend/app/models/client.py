@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Float
-from typing import List
+from typing import List, Optional
 
 from app.extensions import db
 
@@ -12,10 +12,10 @@ class Client(db.Model):
         ForeignKey("users.id"),
         unique=True
     )
-    trainer_id: Mapped[int] = mapped_column(
+    trainer_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("trainers.id")
     )
-    height: Mapped[float] = mapped_column(Float)
+    height: Mapped[Optional[float]] = mapped_column(Float)
 
     user: Mapped["User"] = relationship(
         back_populates="client"
