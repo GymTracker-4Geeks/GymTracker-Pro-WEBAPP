@@ -33,5 +33,3 @@ class Exercise(db.Model):
             "muscle_group": self.muscle_group,
             "routine_id": self.routine_id
         }
-    
-    

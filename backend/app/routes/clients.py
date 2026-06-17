@@ -1,188 +1,153 @@
-from flask import Blueprint, jsonify, request
-from models.client import Client
-from models.user import User
-from models.trainer import Trainer
-from models.routine import Routine
-from models.client_routine import ClientRoutine
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from sqlalchemy import select
+
+from app.utils import get_current_client
+from app.models import BodyWeight
 from app.extensions import db
 
+clients_bp = Blueprint("clients", __name__)
 
-clients_bp = Blueprint('clients', __name__)
+###########################
+#       GET METHODS       #
+###########################
+@clients_bp.route("/me", methods=["GET"])
+@jwt_required()
+def get_me_info():
+    user_id = int(get_jwt_identity())
 
+    client = get_current_client(user_id)
 
-@clients_bp.route("/clients", methods=["GET"])
-def get_clients():
+    if not client:
+        return jsonify({"error": "Client not found"}), 404
 
-    clients = Client.query.all()
-    clients_data =[
-        client.to_dict()
-        for client in clients
-    ]
+    client_data = client.to_dict()
+    client_data["full_name"] = client.user.full_name
+    client_data["email"] = client.user.email
 
-    return jsonify(clients_data), 200
+    return jsonify(client_data), 200
 
+@clients_bp.route("/trainer", methods=["GET"])
+@jwt_required()
+def get_trainer():
+    user_id = int(get_jwt_identity())
 
+    client = get_current_client(user_id)
+
+    if not client:
+        return jsonify({"error": "Client not found."}), 404
+ 
+    if not client.trainer:
+        return jsonify({"trainer": None}), 200
     
+    trainer_data = client.trainer.to_dict()
+    trainer_data["full_name"] = client.trainer.user.full_name
+    trainer_data["email"] = client.trainer.user.email
+    trainer_data["specialty"] = client.trainer.specialty
 
-@clients_bp.route("/clients/<int:client_id>", methods=["GET"])
-def get_client(client_id):
+    return jsonify({
+        "trainer": trainer_data
+    }), 200
 
-    client = Client.query.get(client_id)
-    if client is None:
-        return jsonify(
-            {
-            "msg":"Usuario no encontrado"
-            }
-        ), 404
-    
-    return jsonify(client.to_dict()), 200
-    
-    
+@clients_bp.route("/weight", methods=["GET"])
+@jwt_required()
+def get_weight():
+    user_id = int(get_jwt_identity())
 
+    client = get_current_client(user_id)
 
-@clients_bp.route("/clients", methods=["POST"])
-def create_clients():
+    if not client:
+        return jsonify({"error": "Client not found."}), 404
     
+    query_weight = (
+        select(BodyWeight)
+        .where(BodyWeight.client_id == client.id)
+        .order_by(BodyWeight.recorded_at.desc())
+    )
+    
+    last_weight = db.session.scalars(query_weight).first()
+    
+    if not last_weight:
+        return jsonify({"error": "You do not have an actual body weight set yet."}), 404
+    
+    return jsonify({
+        "weight": last_weight.to_dict()
+    }), 200
+
+@clients_bp.route("/height", methods=["GET"])
+@jwt_required()
+def get_height():
+    user_id = int(get_jwt_identity())
+    
+    client = get_current_client(user_id)
+
+    if not client:
+        return jsonify({"error": "Client not found."}), 404
+    
+    return jsonify({
+        "height": client.height
+    }), 200
+###########################
+#      PATCH METHODS      #
+###########################
+@clients_bp.route("/height", methods=["PATCH"])
+@jwt_required()
+def update_height():
     data = request.get_json()
+    user_id = int(get_jwt_identity())
 
-    if not data:
-        return jsonify({"msg": "JSON inválido"}), 400
+    new_height_value = data.get("height")
+    if new_height_value is None:
+        return jsonify({"error": "Height value is required."}), 400
+
+    client = get_current_client(user_id)
+
+    if not client:
+        return jsonify({"error": "Client not found."}), 404
     
-    user_id = data.get("user_id")
-    trainer_id = data.get("trainer_id")
-
-    if not user_id or not trainer_id:
-        return jsonify(
-            {
-            "msg": "User no encontrado"
-            }
-            ), 404
-
-    user = User.query.get(user_id)
-    if user is None: 
-        return jsonify(
-            {
-            "msg":"User no encontrado"
-            }
-        ), 404
-    trainer = Trainer.query.get(trainer_id)
-
-    if trainer is None: 
-        return jsonify(
-            {
-            "msg":"Entrenador no encontrado"
-            }
-        ), 404
+    try:
+        client.height = float(new_height_value)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid height value."}), 400
     
-    existing_client = Client.query.filter_by(user_id=user_id).first()
-    if existing_client:
-        return jsonify(
-            {
-            "msg": "Este usuario ya es cliente"
-            }
-        ), 409
-
-    new_client = Client(
-        user_id = user_id,
-        trainer_id = trainer_id,
-
-    )
-
-    db.session.add(new_client)
     db.session.commit()
 
-    return jsonify(new_client.to_dict()), 201
+    return jsonify({
+        "message": "Height successfully saved in database.",
+        "height": client.height
+    }), 200
+############################
+#       POST METHODS       #
+############################
+@clients_bp.route("/weight", methods=["POST"])
+@jwt_required()
+def add_weight():
+    data = request.get_json()
+    user_id = int(get_jwt_identity())
 
+    new_weight_value = data.get("weight")
+    if new_weight_value is None:
+        return jsonify({"error": "Weight value is required."}), 400
     
-@clients_bp.route("/clients/<int:client_id>/routines", methods=["POST"])
-def assign_routine(client_id):
-    data =  request.get_json()
-    routine_id = data.get("routine_id")
-    client = Client.query.get(client_id)
+    client = get_current_client(user_id)
 
-    if client is None: 
-        return jsonify(
-            {
-            "msg":"cliente no encontrado"
-            }
-        ), 404
+    if not client:
+        return jsonify({"error": "Client not found."}), 404
     
-    routine = Routine.query.get(routine_id)
+    try:
+        weight = float(new_weight_value)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid weight value."}), 400
 
-    if routine is None: 
-        return jsonify(
-            {
-            "msg":"La rutina no existe"
-            }
-        ), 404
-    
-    existing_assignment = ClientRoutine.query.filter_by(
-        client_id=client_id,
-        routine_id=routine_id
-    ).first
-
-    if existing_assignment:
-        return jsonify(
-            {
-            "msg": "La rutina ya ha sido asignada"
-            }
-        ), 409
-
-    new_assignment = ClientRoutine(
-        client_id=client_id,
-        routine_id=routine_id
+    new_body_weight = BodyWeight(
+        client_id=client.id,
+        weight=weight
     )
 
-    db.session.add(new_assignment)
+    db.session.add(new_body_weight)
     db.session.commit()
 
-    return jsonify(
-        {
-        "msg": "Rutina asignada con exito"
-        }
-    ), 201
-
-@clients_bp.route("/clients/<int:client_id>/routines", methods=["GET"])
-def get_client_routines(client_id):
-
-    client = Client.query.get(client_id)
-
-    if client is None: 
-        return jsonify(
-            {
-            "msg":"cliente no encontrado"
-            }
-        ), 404
-
-    routines_data = [
-        assignment.routine.to_dict()
-        for assignment in client.client_routines
-    ]
-
-    return jsonify(routines_data), 200
-
-@clients_bp.route("/clients/<int:client_id>/routines/<int:routine_id>", methods=["DELETE"])
-def remove_routine(client_id, routine_id):
-
-    assignment = ClientRoutine.query.filter_by(
-        client_id=client_id,
-        routine_id=routine_id
-    ).first()
-
-    if assignment is None:
-        return jsonify(
-            {
-            "msg":"Rutina no asignada al cliente."
-            }
-        ), 404
-    
-    db.session.delete(assignment)
-    db.session.commit
-
-    return jsonify(
-        {
-        "msg":"Rutina desasignada con exito"
-        }
-    ), 200
-
-    
+    return jsonify({
+        "message": "Weight successfully saved in database.",
+        "weight": new_body_weight.to_dict()
+        }), 201

@@ -1,6 +1,0 @@
-export default function Progress() {
-    return (
-        <div className="flex">
-        </div>
-    );
-}

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey
-from typing import List
+from sqlalchemy import ForeignKey, String
+from typing import List, Optional
 
 from app.extensions import db
 
@@ -12,6 +12,7 @@ class Trainer(db.Model):
         ForeignKey("users.id"),
         unique=True
     )
+    specialty: Mapped[Optional[str]] = mapped_column(String(255))
 
     user: Mapped["User"] = relationship(
         back_populates="trainer"
@@ -26,13 +27,9 @@ class Trainer(db.Model):
         cascade="all, delete-orphan"
     )
 
-    diets: Mapped[List["Diet"]] = relationship(
-        back_populates="trainer",
-        cascade="all, delete-orphan"
-    )
-
     def to_dict(self):
         return {
             "id": self.id,
-            "user_id": self.user_id
+            "user_id": self.user_id,
+            "specialty": self.specialty if self.specialty else "Especialista en Hipertrofia y Readaptación"  
         }

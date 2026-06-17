@@ -22,5 +22,6 @@ class BodyWeight(db.Model):
         return {
             "id": self.id,
             "client_id": self.client_id,
-            "weight": self.weight
+            "weight": self.weight,
+            "recorded_at": self.recorded_at.isoformat()
         }

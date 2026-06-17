@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, String, Text
 from typing import List
+
 from app.extensions import db
 
 class Routine(db.Model):
@@ -9,7 +10,6 @@ class Routine(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120))
     description: Mapped[str] = mapped_column(Text)
-
     trainer_id: Mapped[int] = mapped_column(
         ForeignKey("trainers.id")
     )
@@ -23,11 +23,6 @@ class Routine(db.Model):
         cascade="all, delete-orphan"
     )
 
-    client_routines: Mapped[List["ClientRoutine"]] = relationship(
-        back_populates="routine",
-        cascade="all, delete-orphan"
-    )
-
     def to_dict(self):
         return {
             "id": self.id,
@@ -35,5 +30,3 @@ class Routine(db.Model):
             "description": self.description,
             "trainer_id": self.trainer_id
         }
-    
-    
