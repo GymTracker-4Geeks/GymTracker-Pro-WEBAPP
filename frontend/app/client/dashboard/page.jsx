@@ -5,13 +5,6 @@ import { Dumbbell, Flame, Clock, BarChart3, Plus, ChevronRight, Check, TrendingU
 import { useState, useEffect } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
-const todayExercises = [
-    // { name: "Press de banca", sets: "4 series x 10 reps", img: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&h=200&fit=crop", done: true },
-    // { name: "Dominadas", sets: "4 series x 8 reps", img: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=300&h=200&fit=crop", done: true },
-    // { name: "Sentadilla", sets: "4 series x 12 reps", img: "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=300&h=200&fit=crop", done: true },
-    // { name: "Curl de bíceps", sets: "3 series x 12 reps", img: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=300&h=200&fit=crop", done: true },
-];
-
 const weekData = [
     { day: "Lunes", value: 70 },
     { day: "Martes", value: 90 },
@@ -29,14 +22,35 @@ export default function DashboardPage() {
     const [client, setClient] = useState(null);
     const [error, setError] = useState(null);
     const [trainer, setTrainer] = useState(null);
+    const [routine, setRoutine] = useState(null);
 
     useEffect(() => {
+        const fetchRoutine = async () => {
+            try {
+                const token = localStorage.getItem("access_token");
+
+                const response = await fetch(
+                    "http://localhost:5000/api/routines/",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                const data = await response.json()
+                setRoutine(data.routines)
+            } catch (error) {
+                setError(error.message)
+            }
+        };
+
         const fetchTrainer = async () => {
             try {
                 const token = localStorage.getItem("access_token");
 
                 const response = await fetch(
-                    "http://127.0.0.1:5000/api/clients/trainer",
+                    "http://localhost:5000/api/clients/trainer",
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -56,7 +70,7 @@ export default function DashboardPage() {
                 const token = localStorage.getItem("access_token");
 
                 const response = await fetch(
-                    "http://127.0.0.1:5000/api/clients/me",
+                    "http://localhost:5000/api/clients/me",
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -75,6 +89,7 @@ export default function DashboardPage() {
             }
         };
 
+        fetchRoutine();
         fetchTrainer();
         fetchClient();
     }, []);
@@ -162,32 +177,38 @@ export default function DashboardPage() {
             </div>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-3">
-                <section className="lg:col-span-2">
-                    <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">Rutina de hoy</h3>
-                        <button className="text-sm font-medium text-primary hover:underline">Ver todo</button>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        {todayExercises.map((ex) => (
-                            <div key={ex.name} className="card-hover flex items-center gap-4 rounded-xl border border-border bg-card p-3">
-                                <img src={ex.img} alt={ex.name} className="h-16 w-16 shrink-0 rounded-lg object-cover" />
-                                <div className="min-w-0 flex-1">
-                                    <div className="truncate font-semibold">{ex.name}</div>
-                                    <div className="text-xs text-muted-foreground">{ex.sets}</div>
-                                    {ex.done && (
-                                        <div className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary">
-                                            <Check className="h-3 w-3" /> Completado
+                {routine && routine.length > 0 && (
+                    <section className="lg:col-span-2">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">Rutina de hoy</h3>
+                            <button className="text-sm font-medium text-primary hover:underline">Ver todo</button>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            {routine.map((item) => (
+                                <div key={item.id} className="card-hover flex items-center gap-4 rounded-xl border border-border bg-card p-3">
+                                    <img
+                                        src={item.image_url || "/placeholder-routine.jpg"}
+                                        alt={item.name}
+                                        className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                                    />
+
+                                    <div className="min-w-0 flex-1">
+                                        <div className="truncate font-semibold text-foreground">
+                                            {item.name}
                                         </div>
-                                    )}
+                                    </div>
+
+                                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                                 </div>
-                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                        ))}
-                    </div>
-                    <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/60 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10">
-                        Ir a Rutina
-                    </button>
-                </section>
+                            ))}
+                        </div>
+
+                        <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/60 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10">
+                            Ir a Rutina
+                        </button>
+                    </section>
+                )}
 
             </div>
 

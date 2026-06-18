@@ -25,6 +25,11 @@ class Client(db.Model):
         back_populates="clients"
     )
 
+    routines: Mapped[List["ClientRoutine"]] = relationship(
+        back_populates="client",
+        cascade="all, delete-orphan"
+    )
+
     workout_logs: Mapped[List["WorkoutLog"]] = relationship(
         back_populates="client",
         cascade="all, delete-orphan"
@@ -40,5 +45,6 @@ class Client(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "trainer_id": self.trainer_id,
-            "height": self.height
+            "height": self.height,
+            "routine_ids": [routine.routine_id for routine in self.routines] if self.routines else []
         }
