@@ -33,5 +33,12 @@ class Routine(db.Model):
             "id": self.id,
             "name": self.name,
             "description": self.description,
-            "trainer_id": self.trainer_id
+            "trainer_id": self.trainer_id,
+            "exercises": [{
+                "id": ex.id,
+                "name": ex.name,
+                "reps": ex.reps,
+                "sets": ex.sets,
+                "description": ex.description,
+            } for ex in self.exercises] 
         }
