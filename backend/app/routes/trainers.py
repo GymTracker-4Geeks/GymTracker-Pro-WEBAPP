@@ -8,10 +8,13 @@ from app.extensions import db
 
 trainers_bp = Blueprint("trainers", __name__)
 
+###########################
+#       GET METHODS       #
+###########################
 @trainers_bp.route("/clients/<int:client_id>", methods=["GET"])
 @jwt_required()
 def get_client(client_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
 
     client = db.session.scalar(
         select(Client)
@@ -40,7 +43,7 @@ def get_client(client_id):
 @trainers_bp.route("/clients", methods=["GET"])
 @jwt_required()
 def get_clients():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
 
     clients = db.session.scalars(
         select(Client)
@@ -68,3 +71,6 @@ def get_clients():
         clients_list.append(client_data)
 
     return jsonify(clients_list), 200
+############################
+#       POST METHODS       #
+############################
