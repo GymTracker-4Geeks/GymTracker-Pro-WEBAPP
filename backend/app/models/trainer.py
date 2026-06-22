@@ -31,5 +31,5 @@ class Trainer(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "specialty": self.specialty if self.specialty else "Especialista en Hipertrofia y Readaptación"  
+            "specialty": self.specialty if self.specialty else None
         }

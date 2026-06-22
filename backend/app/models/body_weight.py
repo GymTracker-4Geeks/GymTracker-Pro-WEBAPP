@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, Float
+from sqlalchemy import ForeignKey, Float, DateTime
 from datetime import datetime, UTC
 
 from app.extensions import db
@@ -12,7 +12,10 @@ class BodyWeight(db.Model):
         ForeignKey("clients.id")
     )
     weight: Mapped[float] = mapped_column(Float)
-    recorded_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC))
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        default=lambda: datetime.now(UTC)
+    )
 
     client: Mapped["Client"] = relationship(
         back_populates="body_weights"

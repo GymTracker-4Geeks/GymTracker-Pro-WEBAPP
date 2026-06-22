@@ -6,6 +6,22 @@ from app.extensions import db
 def validate_fields(data, fields):
     return data and all(k in data and data[k] for k in fields)
 
+def validate_positive_float(data, fields):
+    if not fields:
+        return False
+    try:
+        return all(float(data[k]) > 0 for k in fields)
+    except (ValueError, TypeError, KeyError):
+        return False
+    
+def validate_positive_integers(data, fields):
+    if not fields:
+        return False
+    try:
+        return all(int(data[k]) > 0 for k in fields)
+    except (ValueError, TypeError, KeyError):
+        return False
+
 def get_current_client(user_id):
     return db.session.scalar(
         select(Client).where(Client.user_id == user_id)

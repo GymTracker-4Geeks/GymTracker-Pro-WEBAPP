@@ -3,8 +3,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.models import Client, Trainer
+from app.models import Client, Trainer, Routine
 from app.extensions import db
+from app.utils import get_current_trainer
 
 trainers_bp = Blueprint("trainers", __name__)
 
@@ -71,6 +72,20 @@ def get_clients():
         clients_list.append(client_data)
 
     return jsonify(clients_list), 200
+
+@trainers_bp.route("/routines", methods=["GET"])
+@jwt_required()
+def get_routines():
+    user_id = int(get_jwt_identity())
+
+    trainer = get_current_trainer(user_id)
+
+    if not trainer:
+        return jsonify({"error": "Trainer not found"}), 404
+    
+    routines = db.session.scalars(select(Routine).where(Routine.trainer_id == trainer.id)).all()
+    
+    return jsonify([routine.to_dict() for routine in routines]), 200
 ############################
 #       POST METHODS       #
 ############################

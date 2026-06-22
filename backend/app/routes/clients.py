@@ -87,13 +87,37 @@ def get_height():
     return jsonify({
         "height": client.height
     }), 200
+
+@clients_bp.route("/weights", methods=["GET"])
+@jwt_required()
+def get_weight_history():
+    user_id = int(get_jwt_identity())
+    client = get_current_client(user_id)
+    
+    if not client:
+        return jsonify({"error": "Client not found."}), 404
+        
+    query_weight = (
+        select(BodyWeight)
+        .where(BodyWeight.client_id == client.id)
+        .order_by(BodyWeight.recorded_at.desc())
+    )
+    
+    weights_records = db.session.scalars(query_weight).all()
+    
+    if not weights_records:
+        return jsonify({"error": "No body weight records found."}), 404
+        
+    return jsonify({
+        "weights": [weight.to_dict() for weight in weights_records]
+    }), 200
 ###########################
 #      PATCH METHODS      #
 ###########################
 @clients_bp.route("/height", methods=["PATCH"])
 @jwt_required()
 def update_height():
-    data = request.get_json()
+    data = request.get_json() or {}
     user_id = int(get_jwt_identity())
 
     new_height_value = data.get("height")
@@ -106,9 +130,14 @@ def update_height():
         return jsonify({"error": "Client not found."}), 404
     
     try:
-        client.height = float(new_height_value)
+        height = float(new_height_value)
+
+        if height <= 0:
+            return jsonify({"error": "Height must be positive"}), 400
     except (TypeError, ValueError):
         return jsonify({"error": "Invalid height value."}), 400
+    
+    client.height = height
     
     db.session.commit()
 
@@ -122,7 +151,7 @@ def update_height():
 @clients_bp.route("/weight", methods=["POST"])
 @jwt_required()
 def add_weight():
-    data = request.get_json()
+    data = request.get_json() or {}
     user_id = int(get_jwt_identity())
 
     new_weight_value = data.get("weight")
@@ -136,6 +165,9 @@ def add_weight():
     
     try:
         weight = float(new_weight_value)
+
+        if weight <= 0:
+            return jsonify({"error": "Weight must be positive"}), 400
     except (TypeError, ValueError):
         return jsonify({"error": "Invalid weight value."}), 400
 
