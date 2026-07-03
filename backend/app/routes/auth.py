@@ -129,7 +129,7 @@ def forget_password():
         try:
             EmailService.send_token_password_email(data.get("email"), token)
         except Exception as error:
-            print(f"error: {error}")
+            (f"error: {error}")
 
     return jsonify({"message": "Your email has been sent successfully, but only if the email exists."})
     

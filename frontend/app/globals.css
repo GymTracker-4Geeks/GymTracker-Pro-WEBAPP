@@ -120,3 +120,16 @@
 .recharts-surface *:focus-visible {
   outline: none !important;
 }
+
+.auth-background { 
+  background-image:
+    linear-gradient(
+      rgba(8,8,8,.55),
+      rgba(20,5,5,.65)
+    ),
+    url("/images/auth/form-wallpaper.jpg");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}

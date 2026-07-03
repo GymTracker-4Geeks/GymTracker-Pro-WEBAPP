@@ -7,14 +7,14 @@ export default function NotFound() {
                 <h1 className="text-7xl font-bold">404</h1>
 
                 <p className="mt-3 text-sm text-muted-foreground">
-                    Página no encontrada.
+                    Page not found.
                 </p>
 
                 <Link
                     href="/client/dashboard"
                     className="mt-6 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
                 >
-                    Volver al inicio
+                    Back Home
                 </Link>
             </div>
         </div>

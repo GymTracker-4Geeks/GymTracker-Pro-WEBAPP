@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import select
 
+from app.services.dashboard_service import get_today_routine, get_today_summary
 from app.utils import get_current_client
 from app.models import BodyWeight
 from app.extensions import db
@@ -110,6 +111,47 @@ def get_weight_history():
         
     return jsonify({
         "weights": [weight.to_dict() for weight in weights_records]
+    }), 200
+
+@clients_bp.route("/dashboard", methods=["GET"])
+@jwt_required()
+def get_client_dashboard():
+    user_id = int(get_jwt_identity())
+
+    client = get_current_client(user_id)
+
+    if not client:
+        return jsonify({"error": "Client not found"}), 404
+    
+    client_data = client.to_dict()
+    client_data["full_name"] = client.user.full_name
+    client_data["email"] = client.user.email
+
+    trainer_data = None
+    if client.trainer:
+        trainer_data = client.trainer.to_dict()
+        trainer_data["full_name"] = client.trainer.user.full_name
+        trainer_data["email"] = client.trainer.user.email
+        trainer_data["specialty"] = client.trainer.specialty
+
+    query_weight = (
+        select(BodyWeight)
+        .where(BodyWeight.client_id == client.id)
+        .order_by(BodyWeight.recorded_at.desc())
+    )
+    last_weight = db.session.scalars(query_weight).first()
+    weight_data = last_weight.to_dict() if last_weight else None
+
+    today_routine = get_today_routine(client.id)
+    today_summary = get_today_summary(client.id, today_routine)
+
+    return jsonify({
+        "client": client_data,
+        "trainer": trainer_data,
+        "last_weight": weight_data,
+        "height": client.height,
+        "today_routine": today_routine.to_dict() if today_routine else None,
+        "today_summary": today_summary
     }), 200
 ###########################
 #      PATCH METHODS      #

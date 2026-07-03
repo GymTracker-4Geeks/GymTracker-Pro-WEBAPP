@@ -4,6 +4,9 @@ import { PageHeader } from "./layout";
 import { Dumbbell, Flame, Clock, BarChart3, Plus, ChevronRight, Check, TrendingUp, Activity } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { getMe, getClientTrainer } from "@/services/clientService";
+import { ClientProfileExtended, RoutineProfile, TrainerProfileExtended } from "@/lib/types";
+import { getClientRoutines } from "@/services/routineService";
 
 const weekData = [
     { day: "Lunes", value: 70 },
@@ -15,83 +18,59 @@ const weekData = [
     { day: "Domingo", value: 50 },
 ];
 
-const activity = [
-];
-
 export default function DashboardPage() {
-    const [client, setClient] = useState(null);
-    const [error, setError] = useState(null);
-    const [trainer, setTrainer] = useState(null);
-    const [routine, setRoutine] = useState(null);
+    const [client, setClient] = useState<ClientProfileExtended | null>(null);
+    const [trainer, setTrainer] = useState<TrainerProfileExtended | null>(null);
+    const [routine, setRoutine] = useState<RoutineProfile[] | null>(null);
+    const [error, setError] = useState<string>('');
+
+    const handleRoutine = async () => {
+        try {
+            const data = await getClientRoutines();
+            setRoutine(data.routines)
+
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(err.message)
+            } else {
+                setError("An unexpected error has occurred.");
+            }
+        }
+    };
+
+    const handleClientTrainer = async () => {
+        try {
+            const data = await getClientTrainer();
+            setTrainer(data.trainer);
+
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(err.message)
+            } else {
+                setError("An unexpected error has occurred.");
+            }
+        }
+    };
+
+    const handleClientInfo = async () => {
+        try {
+            const data = await getMe();
+
+            setClient(data);
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(err.message)
+            } else {
+                setError("An unexpected error has occurred.");
+            }
+        }
+    };
 
     useEffect(() => {
-        const fetchRoutine = async () => {
-            try {
-                const token = localStorage.getItem("access_token");
 
-                const response = await fetch(
-                    "http://localhost:5000/api/routines/",
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                const data = await response.json()
-                setRoutine(data.routines)
-            } catch (error) {
-                setError(error.message)
-            }
-        };
-
-        const fetchTrainer = async () => {
-            try {
-                const token = localStorage.getItem("access_token");
-
-                const response = await fetch(
-                    "http://localhost:5000/api/clients/trainer",
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                const data = await response.json();
-                setTrainer(data.trainer);
-            } catch (error) {
-                setError(error.message);
-            }
-        };
-
-        const fetchClient = async () => {
-            try {
-                const token = localStorage.getItem("access_token");
-
-                const response = await fetch(
-                    "http://localhost:5000/api/clients/me",
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error("No se pudo obtener el cliente");
-                }
-
-                const data = await response.json();
-                setClient(data);
-            } catch (error) {
-                setError(error.message);
-            }
-        };
-
-        fetchRoutine();
-        fetchTrainer();
-        fetchClient();
+        handleRoutine();
+        handleClientTrainer();
+        handleClientInfo();
     }, []);
 
     if (error) return <p>{error}</p>;
@@ -100,10 +79,11 @@ export default function DashboardPage() {
     return (
         <div className="mx-auto max-w-7xl">
             <PageHeader
-                title={`¡Hola, ${client.full_name}! 👋`}
+                title={`¡Hola, ${client?.full_name}! 👋`}
                 subtitle="Listo para superar tus límites hoy."
                 actions={
-                    <button className="inline-flex items-center gap-2 rounded-lg gradient-red glow-red px-4 py-2.5 text-sm font-semibold text-white">
+                    <button
+                        className="inline-flex items-center gap-2 rounded-lg gradient-red glow-red px-4 py-2.5 text-sm font-semibold text-white">
                         <Plus className="h-4 w-4" /> Nuevo entrenamiento
                     </button>
                 }
@@ -188,7 +168,6 @@ export default function DashboardPage() {
                             {routine.map((item) => (
                                 <div key={item.id} className="card-hover flex items-center gap-4 rounded-xl border border-border bg-card p-3">
                                     <img
-                                        src={item.image_url || "/placeholder-routine.jpg"}
                                         alt={item.name}
                                         className="h-16 w-16 shrink-0 rounded-lg object-cover"
                                     />

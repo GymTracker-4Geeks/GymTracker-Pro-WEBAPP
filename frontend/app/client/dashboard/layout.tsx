@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { Home, ListChecks, Dumbbell, TrendingUp, User, Settings, Bell, Search, LogOut, Flame } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { usarAutentificacion } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
+import { getMe } from "@/services/clientService";
+import { ClientProfileExtended } from "@/lib/types";
 
 const nav = [
     { href: "/client/dashboard", label: "Inicio", icon: Home, exact: true },
@@ -15,47 +17,38 @@ const nav = [
     { href: "/client/settings", label: "Configuración", icon: Settings },
 ];
 
-export default function ClientDashboardLayout({ children }) {
+export default function ClientDashboardLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
 
-    const [client, setClient] = useState(null);
-    const [error, setError] = useState(null);
-    const { cerrarSesion } = usarAutentificacion();
+    const [client, setClient] = useState<ClientProfileExtended | null>(null);
+    const [error, setError] = useState<string>('');
 
-    useEffect(() => {
-        const fetchClient = async () => {
-            try {
-                const token = localStorage.getItem("access_token");
+    const { logoutUser } = useAuth();
 
-                const response = await fetch(
-                    "http://127.0.0.1:5000/api/clients/me",
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
+    const handleInfo = async () => {
+        try {
+            const data = await getMe();
+            setClient(data);
 
-                if (!response.ok) {
-                    throw new Error("No se pudo obtener el cliente");
-                }
-
-                const data = await response.json();
-                setClient(data);
-            } catch (error) {
-                setError(error.message);
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An unexpected error has occurred.");
             }
         };
+    }
 
-        fetchClient();
+    const handleLogout = () => {
+        logoutUser();
+    }
+
+    useEffect(() => {
+        handleInfo();
     }, []);
 
     if (error) return <p>{error}</p>;
-    if (!client) return <p>Cargando...</p>;
-
-    const handleLogout = () => {
-        cerrarSesion();
-    }
+    if (!client) return null;
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
@@ -133,7 +126,7 @@ export default function ClientDashboardLayout({ children }) {
     );
 }
 
-export function PageHeader({ title, subtitle, actions }) {
+export function PageHeader({ title, subtitle, actions }: { title: string, subtitle: string, actions?: ReactNode }) {
     return (
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>

@@ -15,7 +15,7 @@ class Client(db.Model):
     trainer_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("trainers.id")
     )
-    height: Mapped[float] = mapped_column(Float)
+    height: Mapped[Optional[float]] = mapped_column(Float)
 
     user: Mapped["User"] = relationship(
         back_populates="client"

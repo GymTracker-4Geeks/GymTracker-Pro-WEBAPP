@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import DBAPIError
 
+from app.services.dashboard_service import get_today_routine
 from app.models import Client, ClientRoutine, Routine, Trainer, Exercise
 from app.extensions import db
 from app.utils import validate_fields, validate_positive_integers, get_current_client, get_current_trainer
@@ -69,6 +70,23 @@ def get_routine(routine_id):
     id_routine = client_routine.routine
 
     return jsonify(id_routine.to_dict()), 200
+
+@routines_bp.route("/today", methods=["GET"])
+@jwt_required()
+def get_client_today_routine():
+    user_id = int(get_jwt_identity())
+
+    client = get_current_client(user_id)
+
+    if not client:
+        return jsonify({"error": "Client not found"}), 404
+    
+    today_routine = get_today_routine(client.id)
+
+    if not today_routine:
+        return jsonify({"message": "No routine today"}), 200
+    
+    return jsonify(today_routine.to_dict()), 200
 ############################
 #       POST METHODS       #
 ############################
@@ -151,6 +169,20 @@ def assign_routine():
     if not client.trainer_id == trainer.id:
         return jsonify({"error": "You cannot assign a routine to this client"}), 403
     
+    day = data.get("routine_day")
+
+    if not day:
+        return jsonify({"error": "You have to assign a day to the client"}), 403
+    
+    days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    
+    standardized_day = day.strip().capitalize()
+
+    if standardized_day not in days_of_week:
+        return jsonify({
+            "error": f"Invalid day '{day}'. Must be one of: {', '.join(days_of_week)}"
+        }), 400
+    
     already_assigned = db.session.scalar(
         select(ClientRoutine).where(
             ClientRoutine.client_id == client.id,
@@ -161,7 +193,7 @@ def assign_routine():
     if already_assigned:
         return jsonify({"message": "Routine already assigned to this client"}), 200
 
-    new_assignment = ClientRoutine(client_id=client.id, routine_id=routine.id)
+    new_assignment = ClientRoutine(client_id=client.id, routine_id=routine.id, week_day=standardized_day)
     db.session.add(new_assignment)
     db.session.commit()
 
