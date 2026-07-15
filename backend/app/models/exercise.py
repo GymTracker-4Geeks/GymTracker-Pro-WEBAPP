@@ -16,9 +16,15 @@ class Exercise(db.Model):
         ForeignKey("routines.id")
     )
 
+    library_exercise_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("exercise_library.id", name="fk_exercise_library")
+    )
+
     routine: Mapped["Routine"] = relationship(
         back_populates="exercises"
     )
+
+    library_exercise: Mapped[Optional["ExerciseLibrary"]] = relationship()
 
     workout_logs: Mapped[List["WorkoutLog"]] = relationship(
         back_populates="exercise"
@@ -31,5 +37,6 @@ class Exercise(db.Model):
             "sets": self.sets,
             "reps": self.reps,
             "muscle_group": self.muscle_group,
-            "routine_id": self.routine_id
+            "routine_id": self.routine_id,
+            "library_exercise_id": self.library_exercise_id
         }

@@ -28,6 +28,7 @@ def create_app():
     from .routes.profiles import profiles_bp
     from .routes.exercises import exercises_bp
     from .routes.workout_logs import workouts_bp
+    from .routes.exercise_library import exercise_library_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(admins_bp, url_prefix="/api/admins")
@@ -37,6 +38,7 @@ def create_app():
     app.register_blueprint(routines_bp, url_prefix="/api/routines")
     app.register_blueprint(profiles_bp, url_prefix="/api/profiles")    
     app.register_blueprint(exercises_bp, url_prefix="/api/exercises")
-    app.register_blueprint(workouts_bp, url_prefix="/api/workouts")    
+    app.register_blueprint(workouts_bp, url_prefix="/api/workouts")
+    app.register_blueprint(exercise_library_bp, url_prefix="/api/exercise-library")
 
     return app

@@ -8,3 +8,4 @@ from .exercise import Exercise
 from .workout_log import WorkoutLog
 from .body_weight import BodyWeight
 from .client_routine import ClientRoutine
+from .exercise_library import ExerciseLibrary
