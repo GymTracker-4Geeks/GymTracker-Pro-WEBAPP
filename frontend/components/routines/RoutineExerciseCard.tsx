@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronDown, GripVertical, Trash2 } from "lucide-react"
+import { ChevronDown, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/Badge"
 import { ExerciseConfigurationForm } from "@/components/routines/ExerciseConfigurationForm"
 import { cn } from "@/lib/utils"
@@ -8,7 +8,6 @@ import type { SelectedExercise, ExerciseConfig } from "@/lib/types"
 
 interface RoutineExerciseCardProps {
     exercise: SelectedExercise
-    index: number
     isEditing: boolean
     onRemove: () => void
     onToggleEdit: () => void
@@ -17,20 +16,18 @@ interface RoutineExerciseCardProps {
 
 export function RoutineExerciseCard({
     exercise,
-    index,
     isEditing,
     onRemove,
     onToggleEdit,
     onConfigChange,
 }: RoutineExerciseCardProps) {
     return (
-        <div className="rounded-xl border border-border bg-card transition-all hover:border-primary/30">
+        <div className="animate-fade-in rounded-xl border border-border bg-card transition-all hover:border-primary/30">
             <div className="flex items-center gap-3 p-4">
-                <GripVertical className="h-5 w-5 flex-shrink-0 text-muted-foreground/50" />
-                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-secondary">
+                <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-secondary" aria-hidden="true">
                     <img
-                        src={exercise.imageUrl}
-                        alt={exercise.name}
+                        src={exercise.imageUrl || undefined}
+                        alt=""
                         className="h-full w-full object-cover"
                         loading="lazy"
                     />
@@ -40,31 +37,37 @@ export function RoutineExerciseCard({
                         {exercise.name}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-1">
-                        <Badge variant="body_part">{exercise.bodyPart}</Badge>
-                        <Badge variant="equipment">{exercise.equipment}</Badge>
+                        {exercise.bodyPart && (
+                            <Badge variant="body_part">{exercise.bodyPart}</Badge>
+                        )}
+                        {exercise.equipment && (
+                            <Badge variant="equipment">{exercise.equipment}</Badge>
+                        )}
                     </div>
                 </div>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground" aria-label={`${exercise.config.sets} sets of ${exercise.config.reps} reps`}>
                     {exercise.config.sets}x{exercise.config.reps}
                 </span>
                 <button
                     onClick={onToggleEdit}
+                    aria-label={isEditing ? "Collapse configuration" : "Edit configuration"}
                     className={cn(
-                        "rounded-lg p-1.5 text-muted-foreground transition-all hover:bg-accent hover:text-foreground",
+                        "rounded-lg p-1.5 text-muted-foreground transition-all hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                         isEditing && "rotate-180 bg-accent text-foreground"
                     )}
                 >
-                    <ChevronDown className="h-4 w-4 transition-transform" />
+                    <ChevronDown className="h-4 w-4 transition-transform" aria-hidden="true" />
                 </button>
                 <button
                     onClick={onRemove}
-                    className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-red-500/15 hover:text-red-400"
+                    aria-label={`Remove ${exercise.name}`}
+                    className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-red-500/15 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
                 >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                 </button>
             </div>
             {isEditing && (
-                <div className="border-t border-border px-4 pb-4">
+                <div className="border-t border-border px-4 pb-4 animate-fade-in">
                     <ExerciseConfigurationForm
                         config={exercise.config}
                         onChange={onConfigChange}

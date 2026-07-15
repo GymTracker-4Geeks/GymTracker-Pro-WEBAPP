@@ -18,12 +18,14 @@ interface ExerciseLibraryModalProps {
     isOpen: boolean
     onClose: () => void
     onSelect: (exercise: ExerciseLibraryItem) => void
+    selectedIds: Set<number>
 }
 
 export function ExerciseLibraryModal({
     isOpen,
     onClose,
     onSelect,
+    selectedIds,
 }: ExerciseLibraryModalProps) {
     const [search, setSearch] = useState("")
     const [bodyPart, setBodyPart] = useState("")
@@ -35,6 +37,7 @@ export function ExerciseLibraryModal({
     const [hasNext, setHasNext] = useState(false)
     const [hasPrev, setHasPrev] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
     const [filters, setFilters] = useState<ExerciseLibraryFiltersData>({
         body_parts: [],
         targets: [],
@@ -50,6 +53,8 @@ export function ExerciseLibraryModal({
         setTarget("")
         setEquipment("")
         setPage(1)
+        setError(null)
+        setExercises([])
         getExerciseLibraryFilters()
             .then(setFilters)
             .catch(console.error)
@@ -57,6 +62,7 @@ export function ExerciseLibraryModal({
 
     const fetchExercises = useCallback(async () => {
         setIsLoading(true)
+        setError(null)
         try {
             const data = await getExerciseLibrary({
                 page,
@@ -71,7 +77,7 @@ export function ExerciseLibraryModal({
             setHasNext(data.has_next)
             setHasPrev(data.has_prev)
         } catch (err) {
-            console.error(err)
+            setError(err instanceof Error ? err.message : "Failed to load exercises")
         } finally {
             setIsLoading(false)
         }
@@ -120,10 +126,12 @@ export function ExerciseLibraryModal({
                 <ExerciseLibraryGrid
                     exercises={exercises}
                     isLoading={isLoading}
+                    error={error}
                     page={page}
                     totalPages={totalPages}
                     hasNext={hasNext}
                     hasPrev={hasPrev}
+                    selectedIds={selectedIds}
                     onPageChange={setPage}
                     onSelect={handleSelect}
                 />

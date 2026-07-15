@@ -39,6 +39,7 @@ export function SearchInput({
                 value={localValue}
                 onChange={(e) => setLocalValue(e.target.value)}
                 placeholder={placeholder}
+                aria-label={placeholder}
                 className={cn(
                     "h-10 w-full rounded-lg border border-border bg-background pl-10 pr-3 text-sm",
                     "text-foreground placeholder:text-muted-foreground",

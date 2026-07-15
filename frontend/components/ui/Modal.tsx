@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useCallback } from "react"
+import { useEffect, useCallback, useState } from "react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -13,6 +13,16 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
+    const [visible, setVisible] = useState(false)
+
+    useEffect(() => {
+        if (isOpen) {
+            requestAnimationFrame(() => setVisible(true))
+        } else {
+            setVisible(false)
+        }
+    }, [isOpen])
+
     const handleKeyDown = useCallback(
         (e: KeyboardEvent) => {
             if (e.key === "Escape") onClose()
@@ -34,14 +44,23 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]">
+        <div
+            className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+        >
             <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+                className={cn(
+                    "fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200",
+                    visible ? "opacity-100" : "opacity-0"
+                )}
                 onClick={onClose}
             />
             <div
                 className={cn(
-                    "relative z-10 w-full max-w-3xl rounded-2xl border border-border bg-card shadow-2xl",
+                    "relative z-10 w-full max-w-3xl rounded-2xl border border-border bg-card shadow-2xl transition-all duration-200",
+                    visible ? "scale-100 opacity-100" : "scale-95 opacity-0",
                     className
                 )}
             >
@@ -51,7 +70,8 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
                     </h2>
                     <button
                         onClick={onClose}
-                        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        aria-label="Close modal"
+                        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                     >
                         <X className="h-5 w-5" />
                     </button>

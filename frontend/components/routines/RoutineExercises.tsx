@@ -36,7 +36,6 @@ export function RoutineExercises({
                 <RoutineExerciseCard
                     key={exercise.tempId}
                     exercise={exercise}
-                    index={index}
                     isEditing={editingIndex === index}
                     onRemove={() => onRemove(index)}
                     onToggleEdit={() => onToggleEdit(index)}

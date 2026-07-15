@@ -161,6 +161,7 @@ export interface RoutineExercise {
     reps: number;
     sets: number;
     muscle_group: string;
+    library_exercise_id?: number | null;
 }
 
 export interface RoutineProfile {
@@ -242,6 +243,7 @@ export interface ExerciseConfig {
 export interface SelectedExercise {
     tempId: string;
     libraryExerciseId: number;
+    exerciseId: number | null;
     name: string;
     bodyPart: string;
     equipment: string;

@@ -40,5 +40,6 @@ class Routine(db.Model):
                 "reps": ex.reps,
                 "sets": ex.sets,
                 "muscle_group": ex.muscle_group,
+                "library_exercise_id": ex.library_exercise_id,
             } for ex in self.exercises] 
         }

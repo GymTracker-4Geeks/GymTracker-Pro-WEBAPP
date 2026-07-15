@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.exc import DBAPIError
 
 from app.services.dashboard_service import get_today_routine
@@ -47,29 +47,34 @@ def get_routines():
 def get_routine(routine_id):
     user_id = int(get_jwt_identity())
 
-    join_stmt = (
-        select(Client)
-        .where(Client.user_id == user_id)
-        .options(
-            selectinload(Client.routines)
-            .filter(ClientRoutine.routine_id == routine_id)
-            .selectinload(ClientRoutine.routine)
-            .selectinload(Routine.exercises)
+    try:
+        stmt = (
+            select(ClientRoutine)
+            .join(Client)
+            .where(
+                Client.user_id == user_id,
+                ClientRoutine.routine_id == routine_id
+            )
+            .options(
+                joinedload(ClientRoutine.routine)
+                .joinedload(Routine.exercises)
             )
         )
 
-    client = db.session.scalars(join_stmt).first()
+        client_routine = db.session.scalar(stmt)
 
-    if not client:
-        return jsonify({"error": "Client not found"}), 404
-    
-    if not client.routines:
-        return jsonify({"error": "Routine not found or access denied"}), 404
+        if not client_routine:
+            return jsonify({
+                "error": "Routine not found or access denied."
+            }), 404
 
-    client_routine = client.routines[0]
-    id_routine = client_routine.routine
+        return jsonify(client_routine.routine.to_dict()), 200
 
-    return jsonify(id_routine.to_dict()), 200
+    except DBAPIError:
+        db.session.rollback()
+        return jsonify({
+            "error": "Database error occurred."
+        }), 500
 
 @routines_bp.route("/today", methods=["GET"])
 @jwt_required()
