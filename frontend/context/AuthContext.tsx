@@ -31,15 +31,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const loginUser = (newToken: string, newRole: string) => {
-        localStorage.setItem('access_token', newToken);
-        localStorage.setItem('role', newRole);
-        setAccessToken(newToken);
-        setRole(newRole);
+        const normalizedRole = newRole.toLowerCase().trim();
 
-        if (newRole === 'trainer') {
-            router.push('/trainer/dashboard');
+        localStorage.setItem('access_token', newToken);
+        localStorage.setItem('role', normalizedRole);
+        setAccessToken(newToken);
+        setRole(normalizedRole);
+
+        if (normalizedRole === 'trainer') {
+            router.replace('/trainer/dashboard');
+        } else if (normalizedRole === 'client') {
+            router.replace('/client/dashboard');
+        } else if (normalizedRole === 'admin') {
+            router.replace('/admin/dashboard');
         } else {
-            router.push('/client/dashboard');
+            router.replace('/auth/login');
         }
     };
 
@@ -48,16 +54,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('role');
         setAccessToken(null);
         setRole(null);
-        router.push('/auth/login');
+        router.replace('/auth/login');
     };
 
     return (
         <AuthContext.Provider value={{ access_token, role, loginUser, logoutUser, loading }}>
-            {!loading && children}
+            {loading ? <div className="flex h-screen items-center justify-center">Loading...</div> : children}
         </AuthContext.Provider>
     );
 }
-
 
 export const useAuth = () => {
     const context = useContext(AuthContext);

@@ -40,6 +40,11 @@ class Client(db.Model):
         cascade="all, delete-orphan"
     )
 
+    sessions: Mapped[List["Session"]] = relationship(
+        back_populates="client", 
+        cascade="all, delete-orphan"
+    )
+
     def to_dict(self):
         return {
             "id": self.id,

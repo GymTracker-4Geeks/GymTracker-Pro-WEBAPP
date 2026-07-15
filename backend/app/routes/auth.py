@@ -9,6 +9,9 @@ from app.utils import validate_fields
 
 auth_bp = Blueprint("auth", __name__)
 
+############################
+#       POST METHODS       #
+############################
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
@@ -19,14 +22,20 @@ def register():
     if data.get("password") != data.get("confirm_password"):
         return jsonify({"error": "Password and Confirm Password do not match."}), 400
     
+    email = data.get("email").strip().lower()
+    full_name = data.get("full_name").strip()
+    
     if db.session.execute(
-        select(User).where(User.email == data.get("email"))
+        select(User).where(User.email == email)
         ).scalar_one_or_none():
         return jsonify({"error": "Email already in use"}), 409
-     
+    
+    email_raw = data.get("email")
+    email = email_raw.lower() if email_raw else None
+
     user = User(
-        full_name = data.get("full_name"),        
-        email = data.get("email"),
+        full_name=full_name,        
+        email=email,
         role="client"
     )
 
@@ -51,12 +60,14 @@ def login():
     if not validate_fields(data, ["email", "password"]):
         return jsonify({"error": "Required fields are missing."}), 400
     
+    email = data.get("email").strip().lower()
+
     user = db.session.execute(
-        select(User).where(User.email == data.get("email"))
+        select(User).where(User.email == email)
     ).scalar_one_or_none()
 
     if not user or not user.check_password(data.get("password")):
-        return jsonify({"error": "Incorrect credentials."}), 401
+        return jsonify({"error": "Invalid email or password."}), 401
     
     token = create_access_token(identity=str(user.id))
 
@@ -64,20 +75,6 @@ def login():
         "access_token": token,
         "user": user.to_dict()
     }), 200
-
-@auth_bp.route("/change-password", methods=["PATCH"])
-@jwt_required()
-def change_password():
-    user_id = int(get_jwt_identity())
-    user = db.session.get(User, user_id)
-    data = request.get_json()
-
-    if data.get("new_password") != data.get("confirm_new_password"):
-        return jsonify({"error": "New Password and Confirm Password do not match."}), 400
-    
-    user.set_password(data.get("new_password"))
-    db.session.commit()
-    return jsonify({"message": "Password updated successfully"}), 200
 
 @auth_bp.route("/reset-password", methods=["GET", "POST"])
 def reset_password():
@@ -132,4 +129,37 @@ def forget_password():
             (f"error: {error}")
 
     return jsonify({"message": "Your email has been sent successfully, but only if the email exists."})
+###########################
+#      PATCH METHODS      #
+###########################
+@auth_bp.route("/change-password", methods=["PATCH"])
+@jwt_required()
+def change_password():
+    user_id = int(get_jwt_identity())
+    user = db.session.get(User, user_id)
+    data = request.get_json()
+
+    if data.get("new_password") != data.get("confirm_new_password"):
+        return jsonify({"error": "New Password and Confirm Password do not match."}), 400
     
+    user.set_password(data.get("new_password"))
+    db.session.commit()
+    return jsonify({"message": "Password updated successfully"}), 200
+
+@auth_bp.route("/set-trainer", methods=["PATCH"])
+@jwt_required()
+def set_trainer():
+    user_id = int(get_jwt_identity())
+    user = db.session.get(User, user_id)
+    data = request.get_json()
+    
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    if not data or "new_role" not in data:
+        return jsonify({"error": "Missing new_role in request body"}), 400
+    
+    user.role = data.get("new_role")
+    db.session.commit()
+
+    return jsonify({"message": "Role updated successfully"}), 200

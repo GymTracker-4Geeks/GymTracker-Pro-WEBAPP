@@ -5,13 +5,28 @@ from sqlalchemy.exc import DBAPIError
 
 from app.models import Routine, Exercise
 from app.extensions import db
-from app.utils import validate_fields, validate_positive_integers, get_current_trainer
+from app.utils import validate_fields, validate_positive_integers, get_current_trainer, get_current_client
 
 exercises_bp = Blueprint("exercises", __name__)
 
 ###########################
 #       GET METHODS       #
 ###########################
+@exercises_bp.route("/", methods=["GET"])
+@jwt_required()
+def get_exercises():
+    user_id = int(get_jwt_identity())
+
+    client = get_current_client(user_id)
+    trainer = get_current_trainer(user_id)
+
+    if not client and not trainer:
+        return jsonify({"error": "Access denied"}), 403
+    
+    exercises = db.session.scalars(select(Exercise)).all()
+
+    return jsonify([exercise.to_dict() for exercise in exercises])
+
 @exercises_bp.route("/routines/<int:routine_id>", methods=["GET"])
 @jwt_required()
 def get_routine_exercises(routine_id):
@@ -91,7 +106,7 @@ def delete_exercise(exercise_id):
     
     if not trainer:
         return jsonify({"error": "Trainer not found"}), 404
-    
+      
     exercise = db.session.scalar(select(Exercise).join(Routine).where(Exercise.id == exercise_id, Routine.trainer_id == trainer.id))
 
     if not exercise:

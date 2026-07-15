@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, String
-from typing import List
+from typing import List, Optional
 
 from app.extensions import db
 
@@ -12,7 +12,7 @@ class Exercise(db.Model):
     sets: Mapped[int] = mapped_column()
     reps: Mapped[int] = mapped_column()
     muscle_group: Mapped[str] = mapped_column(String(100))
-    routine_id: Mapped[int] = mapped_column(
+    routine_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("routines.id")
     )
 

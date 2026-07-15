@@ -6,11 +6,16 @@ import {
     GetHeightResponse, 
     GetWeightsHistoryResponse, 
     UpdateHeightResponse, 
-    AddWeightResponse 
+    AddWeightResponse, 
+    DashboardInfo
 } from "../lib/types";
 
 export const getMe = async (): Promise<ClientProfileExtended> => {
     return GET<ClientProfileExtended>('/api/clients/me');
+};
+
+export const getDashboard = async (): Promise<DashboardInfo> => {
+    return GET<DashboardInfo>('/api/clients/dashboard');
 };
 
 export const getClientTrainer = async (): Promise<GetTrainerResponse> => {

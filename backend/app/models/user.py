@@ -31,6 +31,12 @@ class User(db.Model):
         cascade="all, delete-orphan"
     )
 
+    admin: Mapped["Admin"] = relationship(
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
     def generate_reset_token(self):
         self.token_password_reset = secrets.token_hex(16)
         return self.token_password_reset

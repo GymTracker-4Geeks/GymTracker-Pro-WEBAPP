@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 
 export const metadata : { title : string; description : string } = {
     title: "GymTracker Pro",
-    description: "Plataforma de Gestión para entrenadores y clientes",
+    description: "Management Platform for trainers and clients",
 };
 
 export default function AppLayout({ children } : { children: ReactNode}) {

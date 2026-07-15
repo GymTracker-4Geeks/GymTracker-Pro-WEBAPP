@@ -1,6 +1,11 @@
 //////////////////////////////
 //       Auth Service       //
 //////////////////////////////
+export interface LoginData {
+    email: string;
+    password?: string;
+}
+
 export interface RegisterData {
     full_name: string;
     email: string;
@@ -10,11 +15,6 @@ export interface RegisterData {
 
 export interface RegisterFormState extends RegisterData {
     confirm_password: string;
-}
-
-export interface LoginData {
-    email: string;
-    password?: string;
 }
 
 export interface ChangePasswordData {
@@ -31,7 +31,19 @@ export interface ResetPasswordData {
     newPassword?: string;
 }
 
-export interface User {
+export interface AuthResponse {
+    user: UserProfile;
+    access_token: string;
+}
+
+export interface MessageResponse {
+    message: string;
+    status?: string;
+}
+//////////////////////////////
+//       User Service       //
+//////////////////////////////
+export interface UserProfile {
     id: number;
     full_name: string;
     email: string;
@@ -39,14 +51,13 @@ export interface User {
     created_at: string;
 }
 
-export interface AuthResponse {
-    user: User;
-    access_token: string;
+export interface UsersResponse {
+    users: UserProfile[];
+    has_more: boolean;
 }
 
-export interface MessageResponse {
-    message: string;
-    status?: string;
+export interface AdminProfile extends UserProfile {
+    user_id: string;
 }
 ////////////////////////////////
 //        Client Service      //
@@ -59,10 +70,33 @@ export interface ClientProfile {
     routine_ids: number[];
 }
 
+export interface TodaySummary {
+    completed_exercises: number;
+    total_exercises: number;
+    volume: number;
+    estimated_minutes: number;
+    estimated_calories: number;
+}
+
+export interface DashboardInfo {
+    client: ClientProfileExtended;
+    trainer: TrainerProfileExtended | null;
+    last_weight: BodyWeightRecord | null;
+    height: number | null;
+    today_routine: RoutineProfile | null;
+    today_summary: TodaySummary | null;
+}
+
 export interface TrainerProfile {
     id: number;
     user_id: number;
     specialty: string | null;
+}
+
+export interface UnassignedClient {
+    id: number;
+    full_name: string;
+    email: string | null;
 }
 
 export interface BodyWeightRecord {
@@ -103,10 +137,21 @@ export interface UpdateHeightResponse {
     height: number;
 }
 
+export interface UpdateRoleResponse {
+    message: string;
+    user: UserProfile;
+}
+
 export interface AddWeightResponse {
     message: string;
     weight: BodyWeightRecord;
 }
+
+export interface ClientListItem {
+    id: number;
+    full_name: string;
+}
+
 //////////////////////////////////
 //       Routine Service        //
 //////////////////////////////////
@@ -138,4 +183,16 @@ export interface AssignRoutineData {
 export interface CreateRoutineResponse {
     message: string;
     routine: RoutineProfile;
+}
+//////////////////////////////////
+//       Exercise Service       //
+//////////////////////////////////
+export interface ExerciseProfile {
+    id: number;
+    name: string;
+    sets: number;
+    reps: number;
+    muscle_group: string;
+    routine_id: number;
+    fav: boolean;
 }
