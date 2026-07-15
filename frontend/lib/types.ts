@@ -196,3 +196,55 @@ export interface ExerciseProfile {
     routine_id: number;
     fav: boolean;
 }
+///////////////////////////////////////
+//     Exercise Library Service      //
+///////////////////////////////////////
+export interface ExerciseLibraryItem {
+    id: number;
+    external_id: string;
+    name: string;
+    body_part: string;
+    target: string;
+    equipment: string;
+    secondary_muscles: string[];
+    instructions: string;
+    image_url: string;
+    gif_url: string;
+}
+
+export interface ExerciseLibraryFiltersData {
+    body_parts: string[];
+    targets: string[];
+    equipments: string[];
+}
+
+export interface PaginatedResponse<T> {
+    items: T[];
+    page: number;
+    per_page: number;
+    total: number;
+    pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+}
+///////////////////////////////////////
+//       Routine Builder Types       //
+///////////////////////////////////////
+export interface ExerciseConfig {
+    sets: number;
+    reps: number;
+    rir: number;
+    restTime: number;
+    notes: string;
+    order: number;
+}
+
+export interface SelectedExercise {
+    tempId: string;
+    libraryExerciseId: number;
+    name: string;
+    bodyPart: string;
+    equipment: string;
+    imageUrl: string;
+    config: ExerciseConfig;
+}

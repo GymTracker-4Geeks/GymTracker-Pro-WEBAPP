@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react"
 import { Plus, Users, Copy, MoreVertical, Calendar } from "lucide-react";
 import { PageHeader } from "../layout";
+import { RoutineForm } from "@/components/routines/RoutineForm";
 
 const routines = [
   {
@@ -55,6 +57,29 @@ const routines = [
 ];
 
 export default function RoutinesPage() {
+  const [isCreating, setIsCreating] = useState(false);
+
+  if (isCreating) {
+    return (
+      <div className="mx-auto max-w-7xl">
+        <PageHeader
+          title="New routine"
+          subtitle="Create a routine using the exercise library"
+          actions={
+            <button
+              type="button"
+              onClick={() => setIsCreating(false)}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground"
+            >
+              Cancel
+            </button>
+          }
+        />
+        <RoutineForm />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader
@@ -63,6 +88,7 @@ export default function RoutinesPage() {
         actions={
           <button
             type="button"
+            onClick={() => setIsCreating(true)}
             className="inline-flex items-center gap-2 rounded-lg gradient-red glow-red px-4 py-2.5 text-sm font-semibold text-white"
           >
             <Plus className="h-4 w-4" /> New Routine
