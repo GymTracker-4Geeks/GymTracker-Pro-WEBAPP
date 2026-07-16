@@ -1,11 +1,15 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Copy, MoreVertical, Calendar } from "lucide-react"
+import { Plus, Copy, Pencil, Trash2, Calendar } from "lucide-react"
 import { Skeleton } from "@/components/ui/Skeleton"
+import { DropdownMenu } from "@/components/ui/DropdownMenu"
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
+import { Toast } from "@/components/ui/Toast"
 import { PageHeader } from "../layout"
 import { RoutineForm } from "@/components/routines/RoutineForm"
 import { getTrainerRoutines } from "@/services/trainerService"
+import { deleteRoutine } from "@/services/routineService"
 import type { RoutineProfile } from "@/lib/types"
 
 function RoutineCardSkeleton() {
@@ -31,8 +35,11 @@ function RoutineCardSkeleton() {
 export default function RoutinesPage() {
     const [isCreating, setIsCreating] = useState(false)
     const [editingRoutine, setEditingRoutine] = useState<RoutineProfile | null>(null)
+    const [deleteTarget, setDeleteTarget] = useState<RoutineProfile | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
     const [routines, setRoutines] = useState<RoutineProfile[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
 
     const fetchRoutines = useCallback(() => {
         setIsLoading(true)
@@ -52,11 +59,29 @@ export default function RoutinesPage() {
         setEditingRoutine(null)
     }, [fetchRoutines])
 
+    const handleDelete = useCallback(async () => {
+        if (!deleteTarget) return
+        setIsDeleting(true)
+        try {
+            await deleteRoutine(deleteTarget.id)
+            setToast({ message: `"${deleteTarget.name}" deleted`, type: "success" })
+            setDeleteTarget(null)
+            fetchRoutines()
+        } catch (err) {
+            setToast({
+                message: err instanceof Error ? err.message : "Failed to delete routine",
+                type: "error",
+            })
+        } finally {
+            setIsDeleting(false)
+        }
+    }, [deleteTarget, fetchRoutines])
+
     if (isCreating) {
         return (
             <div className="mx-auto max-w-7xl">
                 <PageHeader
-                    title="New routine"
+                    title="New Routine"
                     subtitle="Create a routine using the exercise library"
                     actions={
                         <button
@@ -158,13 +183,16 @@ export default function RoutinesPage() {
                                             </p>
                                         )}
                                     </div>
-                                    <button
-                                        type="button"
-                                        aria-label="More options"
-                                        className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                                    >
-                                        <MoreVertical className="h-4 w-4" aria-hidden="true" />
-                                    </button>
+                                    <DropdownMenu
+                                        items={[
+                                            {
+                                                label: "Delete",
+                                                icon: <Trash2 className="h-4 w-4" />,
+                                                onClick: () => setDeleteTarget(r),
+                                                variant: "destructive",
+                                            },
+                                        ]}
+                                    />
                                 </div>
                                 <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
                                     <span className="inline-flex items-center gap-1">
@@ -198,6 +226,28 @@ export default function RoutinesPage() {
                         </div>
                     ))}
                 </div>
+            )}
+
+            <ConfirmDialog
+                isOpen={deleteTarget !== null}
+                onClose={() => {
+                    if (!isDeleting) setDeleteTarget(null)
+                }}
+                onConfirm={handleDelete}
+                title="Delete routine"
+                message={`Are you sure you want to delete "${deleteTarget?.name ?? ""}"? This action is irreversible and will remove all exercises and client assignments.`}
+                confirmLabel="Delete"
+                cancelLabel="Cancel"
+                variant="destructive"
+                isConfirming={isDeleting}
+            />
+
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
             )}
         </div>
     )
