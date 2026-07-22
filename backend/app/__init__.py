@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from .extensions import db, cors, jwt, migrate
 from config import Config
@@ -13,10 +14,14 @@ def create_app():
     migrate.init_app(app, db)
     cors.init_app(
         app,
-        resources={r"/api/*": {"origins": "http://localhost:3000"}},
+        resources={
+            r"/api/*": {
+                "origins": os.getenv("FRONTEND_URL")
+            }
+        },
         supports_credentials=True,
         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Content-Type", "Authorization"]
+        allow_headers=["Content-Type", "Authorization"],
     )
 
     from .routes.auth import auth_bp
@@ -43,4 +48,11 @@ def create_app():
     app.register_blueprint(exercise_library_bp, url_prefix="/api/exercise-library")
     app.register_blueprint(bodyweight_bp, url_prefix="/api/bodyweight")
 
+    @app.get("/")
+    def health():
+        return {
+            "status": "ok",
+            "service": "GymTracker Pro API"
+        }, 200
+    
     return app
