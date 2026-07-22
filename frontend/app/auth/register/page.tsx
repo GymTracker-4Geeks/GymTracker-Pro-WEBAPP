@@ -90,15 +90,16 @@ export default function Register() {
 
                 {success && (
                     <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                        ¡Account created successfully! Redirecting...
+                        Account created successfully! Redirecting...
                     </div>
                 )}
 
                 <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-foreground">
+                    <label htmlFor="full_name" className="text-sm font-medium text-foreground">
                         Full Name
                     </label>
                     <input
+                        id="full_name"
                         name="full_name"
                         type="text"
                         value={form.full_name}
@@ -110,10 +111,11 @@ export default function Register() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-foreground">
+                    <label htmlFor="email" className="text-sm font-medium text-foreground">
                         Email
                     </label>
                     <input
+                        id="email"
                         name="email"
                         autoComplete="email"
                         type="email"
@@ -126,12 +128,13 @@ export default function Register() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-foreground">
+                    <label htmlFor="password" className="text-sm font-medium text-foreground">
                         Password
                     </label>
 
                     <div className="relative">
                         <input
+                            id="password"
                             name="password"
                             type={showPassword ? "text" : "password"}
                             value={form.password}
@@ -147,6 +150,7 @@ export default function Register() {
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? "Hide password" : "Show password"}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
                             {showPassword ? (
@@ -162,7 +166,7 @@ export default function Register() {
                 {capsLock && passwordFocused && (
                     <div className="mt-2 flex items-center gap-2 text-xs font-medium text-destructive dark:text-red-400 animate-slide-down">
                         <div className="flex h-5 w-5 items-center justify-center rounded-md bg-destructive/10 dark:bg-red-500/20 text-destructive dark:text-red-400">
-                            <svg xmlns="http://w3.org" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
                                 <path d="m18 9-6-6-6 6M12 3v12M5 21h14" />
                             </svg>
                         </div>
@@ -171,10 +175,11 @@ export default function Register() {
                 )}
 
                 <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-foreground">
+                    <label htmlFor="confirm_password" className="text-sm font-medium text-foreground">
                         Confirm Password
                     </label>
                     <input
+                        id="confirm_password"
                         name="confirm_password"
                         autoComplete="new-password"
                         type={showPassword ? "text" : "password"}
@@ -203,7 +208,7 @@ export default function Register() {
                 </button>
 
                 <div className="text-center text-sm text-muted-foreground">
-                    ¿You already have an account?{" "}
+                    Already have an account?{" "}
                     <Link
                         href="/auth/login"
                         className="font-semibold text-primary hover:opacity-80"

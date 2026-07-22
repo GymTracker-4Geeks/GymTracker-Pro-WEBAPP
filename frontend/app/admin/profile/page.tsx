@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PageHeader } from "../layout";
+import { PageHeader } from "@/components/ui/PageHeader"
+import { useAdminLayout } from "../layout";
 import { Button } from "@/components/ui/Button";
 import { changeName, getMe } from "@/services/userService";
 import { UserProfile } from "@/lib/types";
@@ -11,6 +12,9 @@ export default function ProfilePage() {
     const [inputValue, setInputValue] = useState<string>('');
     const [error, setError] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const [successMessage, setSuccessMessage] = useState<string>('');
+
+    const { refreshUser } = useAdminLayout();
 
     useEffect(() => {
         fetchInfoProfile();
@@ -29,6 +33,7 @@ export default function ProfilePage() {
     const handleName = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
         setError('');
+        setSuccessMessage('');
         setIsSubmitting(true);
 
         try {
@@ -36,10 +41,11 @@ export default function ProfilePage() {
             if (userData) {
                 setUserData({ ...userData, full_name: inputValue });
             }
-            alert("Name updated successfully!");
-        } catch (err: any) {
+            await refreshUser();
+            setSuccessMessage("Name updated successfully!");
+        } catch (err: unknown) {
             console.error("Error updating name:", err);
-            setError(err?.response?.data?.error || "Error al actualizar el nombre");
+            setError(err instanceof Error ? err.message : "Error al actualizar el nombre");
         } finally {
             setIsSubmitting(false);
         }
@@ -96,6 +102,11 @@ export default function ProfilePage() {
                 </section>
 
                 <div className="flex justify-end">
+                    {successMessage && (
+                        <p className="mr-auto rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
+                            {successMessage}
+                        </p>
+                    )}
                     <Button
                         type="submit"
                         disabled={isSubmitting}

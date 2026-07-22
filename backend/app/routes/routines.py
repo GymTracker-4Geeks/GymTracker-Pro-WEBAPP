@@ -288,10 +288,10 @@ def edit_routine(routine_id):
 
     for fields in routine_fields:
         if fields in data:
-            if not validate_fields({fields: data[fields]}, [fields]) or str(data[fields]).strip() == "":
+            stripped = str(data[fields]).strip()
+            if fields == "name" and stripped == "":
                 return jsonify({"error": f"Field '{fields}' cannot be empty or none"}), 400
-        
-            setattr(routine, fields, data[fields])
+            setattr(routine, fields, stripped)
 
     try:
         db.session.commit()
@@ -303,3 +303,54 @@ def edit_routine(routine_id):
         "message": "Routine edited successfully in the database",
         "routine": routine.to_dict()
         }), 200
+############################
+#       POST METHODS       #
+############################
+@routines_bp.route("/<int:routine_id>/duplicate", methods=["POST"])
+@jwt_required()
+def duplicate_routine(routine_id):
+    user_id = int(get_jwt_identity())
+
+    trainer = get_current_trainer(user_id)
+
+    if not trainer:
+        return jsonify({"error": "Trainer not found"}), 404
+
+    original = db.session.scalar(
+        select(Routine).where(
+            Routine.id == routine_id,
+            Routine.trainer_id == trainer.id
+        )
+    )
+
+    if not original:
+        return jsonify({"error": "Routine not found or access denied"}), 404
+
+    try:
+        duplicate = Routine(
+            name=f"{original.name} (Copy)",
+            description=original.description,
+            trainer_id=trainer.id,
+        )
+
+        for ex in original.exercises:
+            duplicate.exercises.append(Exercise(
+                name=ex.name,
+                sets=ex.sets,
+                reps=ex.reps,
+                muscle_group=ex.muscle_group,
+                library_exercise_id=ex.library_exercise_id,
+            ))
+
+        db.session.add(duplicate)
+        db.session.commit()
+        db.session.refresh(duplicate)
+
+        return jsonify({
+            "message": "Routine duplicated successfully",
+            "routine": duplicate.to_dict()
+        }), 201
+
+    except DBAPIError:
+        db.session.rollback()
+        return jsonify({"error": "Database error occurred while duplicating routine"}), 500

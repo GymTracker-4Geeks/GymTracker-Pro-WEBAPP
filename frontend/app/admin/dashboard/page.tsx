@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Loader2, Plus, Save, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { PageHeader } from "@/app/client/layout";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { getMe, getUsers, updateUserRole } from "@/services/userService";
 import { UserProfile } from "@/lib/types";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -135,6 +135,11 @@ export default function DashboardPage() {
 
     }, [page, debouncedSearch, currentUser]);
 
+    const loadingRef = useRef(loading);
+    loadingRef.current = loading;
+    const hasMoreRef = useRef(hasMore);
+    hasMoreRef.current = hasMore;
+
     useEffect(() => {
         const target = observerRef.current;
         const root = scrollContainerRef.current;
@@ -143,7 +148,7 @@ export default function DashboardPage() {
 
         const observer = new IntersectionObserver(
             ([entry]) => {
-                if (entry.isIntersecting && hasMore && !loading) {
+                if (entry.isIntersecting && hasMoreRef.current && !loadingRef.current) {
                     setPage(prev => prev + 1);
                 }
             },
@@ -160,10 +165,14 @@ export default function DashboardPage() {
             observer.disconnect();
         };
 
-    }, [loading, hasMore]);
+    }, []);
 
     if (error) return <p>{error}</p>;
-    if (!currentUser) return null;
+    if (!currentUser) return (
+        <div className="flex justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        </div>
+    );
 
     return (
         <div className="mx-auto max-w-7xl">

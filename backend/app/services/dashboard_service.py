@@ -57,7 +57,7 @@ def get_today_summary(client_id, routine):
 
     completed_count = len(completed_exercises)
 
-    volume = sum(log.weight * log.reps for log in today_logs)
+    volume = sum(log.sets * log.weight * log.reps for log in today_logs)
 
     estimated_minutes = completed_count * 12
 

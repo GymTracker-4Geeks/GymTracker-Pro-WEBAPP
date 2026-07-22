@@ -59,13 +59,13 @@ export default function ForgotPassword() {
                 </div>
 
                 {error && (
-                    <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-3 text-sm">
+                    <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
                         {error}
                     </div>
                 )}
 
                 {message && (
-                    <div className="bg-green-50 border-l-4 border-green-500 text-green-700 p-3 text-sm">
+                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-400">
                         {message}
                     </div>
                 )}
@@ -97,10 +97,10 @@ export default function ForgotPassword() {
                 </button>
 
                 <div className="mt-4 text-center text-sm text-muted-foreground">
-                    ¿You remember your password?{' '}
-                    <a href="/auth/login" className="font-semibold text-primary hover:opacity-80">
+                    Remember your password?{' '}
+                    <Link href="/auth/login" className="font-semibold text-primary hover:opacity-80">
                         Login
-                    </a>
+                    </Link>
                 </div>
 
             </form>

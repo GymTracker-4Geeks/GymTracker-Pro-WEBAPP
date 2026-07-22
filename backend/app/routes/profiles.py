@@ -25,7 +25,9 @@ def change_name():
             return jsonify({"error": "User not found"}), 404
         
         user.full_name = full_name.strip()
+
         db.session.commit()
+        db.session.refresh(user)
         
         return jsonify({"message": "Name updated successfully"}), 200
     except DBAPIError:

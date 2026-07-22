@@ -24,6 +24,11 @@ export default function Login() {
         e.preventDefault();
         setError('');
 
+        if (!form.email.trim() || !form.password) {
+            setError("Please fill in all fields");
+            return;
+        }
+
         try {
             const data = await login(form);
             loginUser(data.access_token, data.user.role);
@@ -70,7 +75,7 @@ export default function Login() {
 
                 {success && (
                     <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
-                        ¡Logged successfully! Redirecting...
+                         Logged in successfully! Redirecting...
                     </div>
                 )}
 
@@ -83,6 +88,7 @@ export default function Login() {
                     </label>
 
                     <input
+                        id="email"
                         name="email"
                         type="email"
                         value={form.email}
@@ -103,6 +109,7 @@ export default function Login() {
 
                     <div className="relative">
                         <input
+                            id="password"
                             name="password"
                             type={showPassword ? "text" : "password"}
                             value={form.password}
@@ -118,6 +125,7 @@ export default function Login() {
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? "Hide password" : "Show password"}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
                             {showPassword ? (
@@ -132,7 +140,7 @@ export default function Login() {
                 {capsLock && passwordFocused && (
                     <div className="mb-2 flex items-center gap-1 text-xs font-medium text-destructive dark:text-red-400 animate-slide-down">
                         <div className="flex h-5 w-5 items-center justify-center rounded-md bg-destructive/10 dark:bg-red-500/20 text-destructive dark:text-red-400">
-                            <svg xmlns="http://w3.org" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
                                 <path d="m18 9-6-6-6 6M12 3v12M5 21h14" />
                             </svg>
                         </div>
@@ -148,7 +156,7 @@ export default function Login() {
                 </button>
 
                 <div className="text-center text-sm text-muted-foreground">
-                    ¿Forgot your password?{" "}
+                    Forgot your password?{" "}
                     <Link
                         href="/auth/forgot-password"
                         className="font-semibold text-primary hover:opacity-80"

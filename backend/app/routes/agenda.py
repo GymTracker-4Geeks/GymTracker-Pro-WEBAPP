@@ -44,7 +44,7 @@ def get_sessions():
 def create_session():
     data = request.get_json()
 
-    if not validate_fields(data, ("date", "hour", "client_id")):
+    if validate_fields(data, ("date", "hour", "client_id")):
         return jsonify({"error": "Missing required fields (date, hour, client_id) to create the session"}), 400
 
     try:

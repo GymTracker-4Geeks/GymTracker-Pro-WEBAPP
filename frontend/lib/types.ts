@@ -28,7 +28,8 @@ export interface ForgotPasswordData {
 
 export interface ResetPasswordData {
     token?: string;
-    newPassword?: string;
+    new_password?: string;
+    confirm_new_password?: string;
 }
 
 export interface AuthResponse {
@@ -147,6 +148,16 @@ export interface AddWeightResponse {
     weight: BodyWeightRecord;
 }
 
+export interface UpdateWeightResponse {
+    message: string;
+    body_weight: BodyWeightRecord;
+}
+
+export interface CreateWeightResponse {
+    message: string;
+    body_weight: BodyWeightRecord;
+}
+
 export interface ClientListItem {
     id: number;
     full_name: string;
@@ -169,6 +180,7 @@ export interface RoutineProfile {
     name: string;
     description: string;
     trainer_id: number;
+    assigned_count: number;
     exercises: RoutineExercise[]
 }
 
@@ -179,6 +191,20 @@ export interface ClientRoutinesResponse extends ClientProfile {
 export interface AssignRoutineData {
     routine_id: number;
     client_id: number;
+    routine_day: string;
+}
+
+export interface AssignedDay {
+    routine_id: number;
+    routine_name: string;
+    week_day: string;
+}
+
+export interface RoutineAssignment {
+    client_id: number;
+    full_name: string;
+    email: string | null;
+    week_day: string;
 }
 
 export interface CreateRoutineResponse {
@@ -249,4 +275,31 @@ export interface SelectedExercise {
     equipment: string;
     imageUrl: string;
     config: ExerciseConfig;
+}
+///////////////////////////////////////
+//       Workout Log Service         //
+///////////////////////////////////////
+export interface WorkoutLogEntry {
+    id: number;
+    client_id: number;
+    exercise_id: number;
+    weight: number;
+    reps: number;
+    sets: number;
+    performed_at: string;
+    exercise_name: string | null;
+}
+
+export interface CreateWorkoutLogResponse {
+    message: string;
+    workout_log: WorkoutLogEntry;
+}
+
+export interface UpdateWorkoutLogResponse {
+    message: string;
+    workout_log: WorkoutLogEntry;
+}
+
+export interface ChangeNameResponse {
+    message: string;
 }

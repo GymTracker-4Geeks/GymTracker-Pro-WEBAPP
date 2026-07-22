@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy import select
+from datetime import datetime, UTC
 
 from app.models import User, Client
 from app.extensions import db
@@ -90,6 +91,9 @@ def reset_password():
         if not user:
             return jsonify({"error": "This token is expired or invalid."}), 400
 
+        if user.token_password_reset_expires_at and datetime.now(UTC) > user.token_password_reset_expires_at:
+            return jsonify({"error": "This token is expired or invalid."}), 400
+
         return jsonify({"Valid": True}), 200
 
     if request.method == "POST":
@@ -102,19 +106,23 @@ def reset_password():
 
         if not user:
             return jsonify({"error": "This token is expired or invalid."}), 400
+
+        if user.token_password_reset_expires_at and datetime.now(UTC) > user.token_password_reset_expires_at:
+            return jsonify({"error": "This token is expired or invalid."}), 400
         
         if data.get("new_password") != data.get("confirm_new_password"):
             return jsonify({"error": "New Password and Confirm Password do not match."}), 400
 
         user.set_password(data.get("new_password"))
-        user.token_password_reset = None 
+        user.token_password_reset = None
+        user.token_password_reset_expires_at = None
         db.session.commit()
 
         return jsonify({"message": "Password updated successfully"}), 200
 
-@auth_bp.route("/forget-password", methods=["POST"])
-def forget_password():
-    data = request.get_json()
+@auth_bp.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json() or {}
 
     user = db.session.execute(
         select(User).where(User.email == data.get("email"))
@@ -123,12 +131,10 @@ def forget_password():
     if user:
         token = user.generate_reset_token()
         db.session.commit()
-        try:
-            EmailService.send_token_password_email(data.get("email"), token)
-        except Exception as error:
-            (f"error: {error}")
-
-    return jsonify({"message": "Your email has been sent successfully, but only if the email exists."})
+        EmailService.send_token_password_email(data.get("email"), token)
+    return jsonify({
+        "message": "Your email has been sent successfully."
+    })
 ###########################
 #      PATCH METHODS      #
 ###########################

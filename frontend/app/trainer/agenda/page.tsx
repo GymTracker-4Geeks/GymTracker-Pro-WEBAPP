@@ -12,9 +12,15 @@ import {
     addDays,
     isSameDay
 } from "date-fns";
-import { es } from "date-fns/locale";
-import { PageHeader } from "../layout";
+import { enUS } from "date-fns/locale";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { cn } from "@/lib/utils";
+import { Toast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
+import { Input } from "@/components/ui/Input";
+import { Spinner } from "@/components/ui/Spinner";
 
 import { GET, POST, DELETE } from "@/services/api";
 import { getMyClients } from "@/services/trainerService";
@@ -35,88 +41,120 @@ type Sess = {
 
 export default function Agenda() {
     const [selectedDate, setSelectedDate] = React.useState<Date>(new Date());
+    const [today] = React.useState(() => new Date());
     const [sessions, setSessions] = React.useState<Sess[]>([]);
     const [clients, setClients] = React.useState<ClientListItem[]>([]);
     const [loading, setLoading] = React.useState<boolean>(true);
+    const [toast, setToast] = React.useState<{ message: string; type: "success" | "error" } | null>(null);
+    const [deleteTarget, setDeleteTarget] = React.useState<{ session: Sess; dateStr: string } | null>(null);
+    const [isDeleting, setIsDeleting] = React.useState(false);
+    const [sessionModalOpen, setSessionModalOpen] = React.useState(false);
+    const [sessionDateStr, setSessionDateStr] = React.useState("");
+    const [sessionHour, setSessionHour] = React.useState(0);
+    const [selectedClientId, setSelectedClientId] = React.useState("");
+    const [sessionType, setSessionType] = React.useState("1-on-1");
+    const [isCreating, setIsCreating] = React.useState(false);
 
     const startOfWeekConst = startOfWeek(selectedDate, { weekStartsOn: 1 });
     const endOfWeekConst = endOfWeek(selectedDate, { weekStartsOn: 1 });
     const currentWeekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeekConst, i));
+    const startStr = format(startOfWeekConst, "yyyy-MM-dd");
+    const endStr = format(endOfWeekConst, "yyyy-MM-dd");
 
-    const fetchSessions = async () => {
+    const fetchSessions = React.useCallback(async (signal?: AbortSignal) => {
         setLoading(true);
         try {
-            const startStr = format(startOfWeekConst, "yyyy-MM-dd");
-            const endStr = format(endOfWeekConst, "yyyy-MM-dd");
-
-            const data = await GET<Sess[]>(`/api/agenda/sessions?start_date=${startStr}&end_date=${endStr}`);
+            const data = await GET<Sess[]>(`/api/agenda/sessions?start_date=${startStr}&end_date=${endStr}`, signal);
             setSessions(data);
-        } catch (error) {
-            console.error("Error retrieving Flask sessions:", error);
+        } catch (error: unknown) {
+            if (error instanceof DOMException && error.name === "AbortError") return;
+            console.error("Error retrieving sessions:", error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [startStr, endStr]);
 
-    const fetchClients = async () => {
+    const fetchClients = React.useCallback(async (signal?: AbortSignal) => {
         try {
-            const data = await getMyClients();
+            const data = await getMyClients(signal);
             setClients(data);
-        } catch (error) {
-            console.error("Error retrieving the list of assigned clients:", error);
+        } catch (error: unknown) {
+            if (error instanceof DOMException && error.name === "AbortError") return;
+            console.error("Error retrieving clients:", error);
         }
-    };
-
-    React.useEffect(() => {
-        fetchSessions();
-    }, [selectedDate]);
-
-    React.useEffect(() => {
-        fetchClients();
     }, []);
+
+    React.useEffect(() => {
+        const controller = new AbortController();
+        fetchSessions(controller.signal);
+        return () => controller.abort();
+    }, [fetchSessions]);
+
+    React.useEffect(() => {
+        const controller = new AbortController();
+        fetchClients(controller.signal);
+        return () => controller.abort();
+    }, [fetchClients]);
 
     const handleCreateSession = async (dateStr: string, hourIndex: number) => {
         if (clients.length === 0) {
-            alert("There are no clients assigned to your profile to schedule sessions.");
+            setToast({ message: "There are no clients assigned to your profile to schedule sessions.", type: "error" });
+            return;
+        }
+        setSessionDateStr(dateStr);
+        setSessionHour(hourIndex);
+        setSelectedClientId("");
+        setSessionType("1-on-1");
+        setSessionModalOpen(true);
+    };
+
+    const handleCreateSubmit = async () => {
+        if (!selectedClientId) {
+            setToast({ message: "Please select a client.", type: "error" });
             return;
         }
 
-        const listaClientesTexto = clients.map(c => `${c.id}: ${c.full_name}`).join("\n");
-        const clientIdInput = prompt(`Select the assigned client ID:\n\n${listaClientesTexto}`);
-
-        if (!clientIdInput) return;
-        const clientId = parseInt(clientIdInput);
-
-        if (isNaN(clientId) || !clients.some(c => c.id === clientId)) {
-            alert("Invalid client ID.");
-            return;
-        }
-
-        const sessionType = prompt("Session Type:", "1-on-1") || "1-on-1";
-
-        const newSession = {
-            date: dateStr,
-            hour: hourIndex,
-            type: sessionType,
-            color: "bg-primary/90",
-            client_id: clientId
-        };
-
+        setIsCreating(true);
         try {
-            await POST<any, typeof newSession>("/api/agenda/sessions", newSession);
+            const newSession = {
+                date: sessionDateStr,
+                hour: sessionHour,
+                type: sessionType,
+                color: "bg-primary/90",
+                client_id: parseInt(selectedClientId),
+            };
+            await POST<{ message: string }, typeof newSession>("/api/agenda/sessions", newSession);
+            setSessionModalOpen(false);
             fetchSessions();
-        } catch (error: any) {
-            console.error("Error sending the session via POST:", error);
-            alert(error.message || "The session could not be scheduled.");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "The session could not be scheduled.";
+            setToast({ message, type: "error" });
+        } finally {
+            setIsCreating(false);
         }
     };
+
+    const handleDeleteConfirm = React.useCallback(async () => {
+        if (!deleteTarget || !deleteTarget.session.id) return;
+        setIsDeleting(true);
+        try {
+            await DELETE(`/api/agenda/sessions/${deleteTarget.session.id}`);
+            fetchSessions();
+            setDeleteTarget(null);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Could not delete the session.";
+            setToast({ message, type: "error" });
+        } finally {
+            setIsDeleting(false);
+        }
+    }, [deleteTarget, fetchSessions]);
 
     const handlePrevWeek = () => setSelectedDate((prev) => subWeeks(prev, 1));
     const handleNextWeek = () => setSelectedDate((prev) => addWeeks(prev, 1));
     const handleToday = () => setSelectedDate(new Date());
 
-    const startMonth = format(startOfWeekConst, "MMMM", { locale: es });
-    const endMonth = format(endOfWeekConst, "MMMM", { locale: es });
+    const startMonth = format(startOfWeekConst, "MMMM", { locale: enUS });
+    const endMonth = format(endOfWeekConst, "MMMM", { locale: enUS });
     const weekSubtitle = startMonth === endMonth
         ? `Week of ${format(startOfWeekConst, "MMMM d")} to ${format(endOfWeekConst, "d")}`
         : `Week of ${format(startOfWeekConst, "MMMM d")} to ${format(endOfWeekConst, "MMMM d")}`;
@@ -133,7 +171,7 @@ export default function Agenda() {
                                 <ChevronLeft className="h-4 w-4" />
                             </button>
                             <button type="button" onClick={handleToday} className="px-2 text-sm font-medium hover:text-foreground">
-                                Esta semana
+                                This week
                             </button>
                             <button type="button" onClick={handleNextWeek} className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
                                 <ChevronRight className="h-4 w-4" />
@@ -144,15 +182,13 @@ export default function Agenda() {
                             onClick={() => handleCreateSession(format(new Date(), "yyyy-MM-dd"), 0)}
                             className="inline-flex items-center gap-2 rounded-lg gradient-red glow-red px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
                         >
-                            <Plus className="h-4 w-4" /> Nueva sesión
+                            <Plus className="h-4 w-4" /> New Session
                         </button>
                     </div>
                 }
             />
 
             <div className="flex flex-col gap-6 lg:flex-row items-start mt-4">
-
-                {/* Selector Lateral Izquierdo: Tu componente integrado */}
                 <div className="rounded-2xl border border-border bg-card p-3 shrink-0 shadow-sm mx-auto lg:mx-0">
                     <Calendar
                         mode="single"
@@ -161,11 +197,10 @@ export default function Agenda() {
                     />
                 </div>
 
-                {/* Panel Derecho: Rejilla horaria dinámica */}
                 <div className="flex-1 w-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm relative">
                     {loading && (
                         <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] z-50 flex items-center justify-center text-sm font-medium text-muted-foreground">
-                            Sincronizando con la base de datos...
+                            Loading...
                         </div>
                     )}
 
@@ -173,15 +208,13 @@ export default function Agenda() {
                         className="grid min-w-[700px] md:min-w-0"
                         style={{ gridTemplateColumns: "60px repeat(7, minmax(0, 1fr))" }}
                     >
-                        {/* Esquina superior izquierda vacía */}
                         <div className="border-b border-r border-border bg-background/40 p-3" />
 
-                        {/* Mapeo de cabeceras de días (Eje X superior) */}
                         {currentWeekDays.map((day) => {
-                            const esHoy = isSameDay(day, new Date());
+                            const esHoy = isSameDay(day, today);
                             return (
                                 <div key={day.toISOString()} className={cn("border-b border-r border-border p-3 text-center text-xs font-semibold uppercase tracking-wider", esHoy ? "bg-primary/5 text-primary" : "bg-background/40 text-muted-foreground")}>
-                                    <div className="text-[10px] opacity-70">{format(day, "eee", { locale: es })}</div>
+                                    <div className="text-[10px] opacity-70">{format(day, "eee", { locale: enUS })}</div>
                                     <div className={cn("text-sm font-bold mt-0.5 mx-auto flex h-6 w-6 items-center justify-center rounded-full", esHoy && "bg-primary text-primary-foreground")}>
                                         {format(day, "d")}
                                     </div>
@@ -189,14 +222,12 @@ export default function Agenda() {
                             );
                         })}
 
-                        {/* Renderizado de filas de horas (Eje Y lateral) */}
                         {hours.map((h, hi) => (
                             <div key={h} className="contents">
                                 <div className="border-b border-r border-border bg-background/30 p-2 text-right text-[11px] font-medium text-muted-foreground flex items-center justify-end h-14">
                                     {h}:00
                                 </div>
 
-                                {/* Renderizado de las celdas cruzadas para cada día a la hora actual */}
                                 {currentWeekDays.map((day) => {
                                     const dateStr = format(day, "yyyy-MM-dd");
                                     const s = sessions.find((x) => x.date === dateStr && x.hour === hi);
@@ -204,21 +235,24 @@ export default function Agenda() {
                                     return (
                                         <div
                                             key={`${h}-${day.toISOString()}`}
-                                            // Se actualizó la lógica para interceptar de forma reactiva la eliminación de registros
-                                            onClick={async () => {
-                                                if (!s) {
-                                                    handleCreateSession(dateStr, hi);
-                                                } else {
-                                                    const confirmar = confirm(`¿Estás seguro de que deseas eliminar la sesión de ${s.client}?`);
-                                                    if (!confirmar || !s.id) return;
-
-                                                    try {
-                                                        await DELETE(`/api/agenda/sessions/${s.id}`);
-                                                        fetchSessions();
-                                                    } catch (error: any) {
-                                                        console.error("Error al eliminar la sesión:", error);
-                                                        alert(error.message || "No se pudo eliminar la sesión del servidor.");
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-label={s ? `${s.client} - ${s.type}` : `Create session at ${h}:00`}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter" || e.key === " ") {
+                                                    e.preventDefault();
+                                                    if (s) {
+                                                        setDeleteTarget({ session: s, dateStr });
+                                                    } else {
+                                                        handleCreateSession(dateStr, hi);
                                                     }
+                                                }
+                                            }}
+                                            onClick={() => {
+                                                if (s) {
+                                                    setDeleteTarget({ session: s, dateStr });
+                                                } else {
+                                                    handleCreateSession(dateStr, hi);
                                                 }
                                             }}
                                             className="relative h-14 border-b border-r border-border hover:bg-background/40 transition-colors group cursor-pointer"
@@ -238,8 +272,63 @@ export default function Agenda() {
                         ))}
                     </div>
                 </div>
-
             </div>
+
+            <ConfirmDialog
+                isOpen={deleteTarget !== null}
+                onClose={() => { if (!isDeleting) setDeleteTarget(null) }}
+                onConfirm={handleDeleteConfirm}
+                title="Delete Session"
+                message={`Are you sure you want to delete the session for ${deleteTarget?.session.client}?`}
+                confirmLabel="Delete"
+                cancelLabel="Cancel"
+                variant="destructive"
+                isConfirming={isDeleting}
+            />
+
+            <Modal isOpen={sessionModalOpen} onClose={() => setSessionModalOpen(false)} title="New Session" className="!max-w-sm">
+                <div className="space-y-4">
+                    <Select
+                        label="Client"
+                        value={selectedClientId}
+                        options={clients.map((c) => String(c.id))}
+                        labels={Object.fromEntries(clients.map((c) => {
+                            const initials = c.full_name.split(" ").map(n => n[0]?.toUpperCase()).join("")
+                            return [String(c.id), `${initials} — ${c.full_name}`]
+                        }))}
+                        onChange={setSelectedClientId}
+                        placeholder="Select a client"
+                    />
+                    <Input
+                        label="Session Type"
+                        value={sessionType}
+                        onChange={(e) => setSessionType(e.target.value)}
+                        placeholder="e.g. 1-on-1"
+                    />
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => setSessionModalOpen(false)}
+                            disabled={isCreating}
+                            className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleCreateSubmit}
+                            disabled={!selectedClientId || isCreating}
+                            className="gradient-red glow-red inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {isCreating ? <><Spinner className="h-4 w-4" /> Creating...</> : "Create"}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {toast && (
+                <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+            )}
         </div>
     );
 }

@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return (
         <AuthContext.Provider value={{ access_token, role, loginUser, logoutUser, loading }}>
-            {loading ? <div className="flex h-screen items-center justify-center">Loading...</div> : children}
+            {loading ? <div className="flex h-screen items-center justify-center bg-background"><div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" /></div> : children}
         </AuthContext.Provider>
     );
 }

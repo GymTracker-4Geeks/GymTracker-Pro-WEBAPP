@@ -34,6 +34,7 @@ class Routine(db.Model):
             "name": self.name,
             "description": self.description,
             "trainer_id": self.trainer_id,
+            "assigned_count": len(self.clients) if self.clients else 0,
             "exercises": [{
                 "id": ex.id,
                 "name": ex.name,

@@ -1,9 +1,10 @@
 import { GET, PATCH } from "./api";
-import { 
+import {
     UpdateRoleResponse,
     UserProfile,
     UsersResponse,
-} from "../lib/types";
+    ChangeNameResponse,
+} from "../lib/types"
 
 export const getMe = async (): Promise<UserProfile> => {
     return GET<UserProfile>('/api/clients/me');
@@ -22,6 +23,6 @@ export const updateUserRole = async (userId: number, role: string): Promise<Upda
     return PATCH<UpdateRoleResponse>(`/api/admins/users/${userId}/role`,{role,});
 };
 
-export const changeName = async (fullName: string): Promise<any> => {
-    return PATCH<any>('/api/profiles/change-name', { full_name: fullName })
+export const changeName = async (fullName: string): Promise<ChangeNameResponse> => {
+    return PATCH<ChangeNameResponse>('/api/profiles/change-name', { full_name: fullName })
 };

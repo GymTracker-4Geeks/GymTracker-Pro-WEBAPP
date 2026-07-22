@@ -18,4 +18,5 @@ class ClientRoutine(db.Model):
         return {
             "client_id": self.client_id,
             "routine_id": self.routine_id,
+            "week_day": self.week_day,
         }

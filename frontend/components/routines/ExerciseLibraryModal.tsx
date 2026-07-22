@@ -47,6 +47,7 @@ export function ExerciseLibraryModal({
 
     useEffect(() => {
         if (!isOpen) return
+        const controller = new AbortController()
         setOpenCount((c) => c + 1)
         setSearch("")
         setBodyPart("")
@@ -55,12 +56,15 @@ export function ExerciseLibraryModal({
         setPage(1)
         setError(null)
         setExercises([])
-        getExerciseLibraryFilters()
+        getExerciseLibraryFilters(controller.signal)
             .then(setFilters)
-            .catch(console.error)
+            .catch((err) => {
+                if (err.name !== "AbortError") console.error(err)
+            })
+        return () => controller.abort()
     }, [isOpen])
 
-    const fetchExercises = useCallback(async () => {
+    const fetchExercises = useCallback(async (signal?: AbortSignal) => {
         setIsLoading(true)
         setError(null)
         try {
@@ -71,12 +75,13 @@ export function ExerciseLibraryModal({
                 body_part: bodyPart || undefined,
                 target: target || undefined,
                 equipment: equipment || undefined,
-            })
+            }, signal)
             setExercises(data.items)
             setTotalPages(data.pages)
             setHasNext(data.has_next)
             setHasPrev(data.has_prev)
         } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") return
             setError(err instanceof Error ? err.message : "Failed to load exercises")
         } finally {
             setIsLoading(false)
@@ -84,9 +89,11 @@ export function ExerciseLibraryModal({
     }, [page, search, bodyPart, target, equipment])
 
     useEffect(() => {
+        const controller = new AbortController()
         if (isOpen) {
-            fetchExercises()
+            fetchExercises(controller.signal)
         }
+        return () => controller.abort()
     }, [isOpen, fetchExercises])
 
     const handleSearch = useCallback((value: string) => {

@@ -7,9 +7,10 @@ interface SelectProps {
     options: string[]
     onChange: (value: string) => void
     placeholder?: string
+    labels?: Record<string, string>
 }
 
-export function Select({ label, value, options, onChange, placeholder }: SelectProps) {
+export function Select({ label, value, options, onChange, placeholder, labels }: SelectProps) {
     return (
         <div className="space-y-1.5">
             <label className="block text-sm font-medium text-foreground">
@@ -31,7 +32,7 @@ export function Select({ label, value, options, onChange, placeholder }: SelectP
                     )}
                     {options.map((option) => (
                         <option key={option} value={option}>
-                            {option}
+                            {labels?.[option] ?? option}
                         </option>
                     ))}
                 </select>

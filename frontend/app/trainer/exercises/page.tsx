@@ -1,115 +1,133 @@
-"use client";
+"use client"
 
-import { Plus, Filter, PlayCircle } from "lucide-react";
-import { PageHeader } from "../layout";
-
-const groups = ["Todos", "Pecho", "Espalda", "Pierna", "Hombro", "Brazo", "Core"];
-
-const exercises = [
-  {
-    name: "Press de banca",
-    group: "Pecho",
-    img: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=260&fit=crop",
-  },
-  {
-    name: "Sentadilla trasera",
-    group: "Pierna",
-    img: "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=400&h=260&fit=crop",
-  },
-  {
-    name: "Dominada",
-    group: "Espalda",
-    img: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=400&h=260&fit=crop",
-  },
-  {
-    name: "Press militar",
-    group: "Hombro",
-    img: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=260&fit=crop",
-  },
-  {
-    name: "Peso muerto",
-    group: "Espalda",
-    img: "https://images.unsplash.com/photo-1517344884509-a0c97ec11bcc?w=400&h=260&fit=crop",
-  },
-  {
-    name: "Curl bíceps",
-    group: "Brazo",
-    img: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=400&h=260&fit=crop",
-  },
-  {
-    name: "Hip thrust",
-    group: "Pierna",
-    img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=260&fit=crop",
-  },
-  {
-    name: "Plancha",
-    group: "Core",
-    img: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=400&h=260&fit=crop",
-  },
-];
+import { useState, useEffect, useCallback } from "react"
+import { Dumbbell, Search } from "lucide-react"
+import { PageHeader } from "@/components/ui/PageHeader"
+import { ExerciseLibrarySearch } from "@/components/routines/ExerciseLibrarySearch"
+import { ExerciseLibraryFilters } from "@/components/routines/ExerciseLibraryFilters"
+import { ExerciseLibraryGrid } from "@/components/routines/ExerciseLibraryGrid"
+import { getExerciseLibrary, getExerciseLibraryFilters } from "@/services/exerciseLibraryService"
+import type { ExerciseLibraryItem, ExerciseLibraryFiltersData } from "@/lib/types"
 
 export default function ExercisesPage() {
-  return (
-    <div className="mx-auto max-w-7xl">
-      <PageHeader
-        title="Library of Exercises"
-        subtitle="See how many exercises we have, be free to use any of this in your routines"
-        actions={
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg gradient-red glow-red px-4 py-2.5 text-sm font-semibold text-white"
-          >
-            <Plus className="h-4 w-4" /> New Exercise
-          </button>
-        }
-      />
+    const [search, setSearch] = useState("")
+    const [bodyPart, setBodyPart] = useState("")
+    const [target, setTarget] = useState("")
+    const [equipment, setEquipment] = useState("")
+    const [page, setPage] = useState(1)
+    const [exercises, setExercises] = useState<ExerciseLibraryItem[]>([])
+    const [totalPages, setTotalPages] = useState(0)
+    const [hasNext, setHasNext] = useState(false)
+    const [hasPrev, setHasPrev] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const [filters, setFilters] = useState<ExerciseLibraryFiltersData>({
+        body_parts: [],
+        targets: [],
+        equipments: [],
+    })
 
-      <div className="mb-5 flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card p-1">
-          {groups.map((g, i) => (
-            <button
-              key={g}
-              type="button"
-              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                i === 0
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {g}
-            </button>
-          ))}
+    useEffect(() => {
+        const controller = new AbortController()
+        getExerciseLibraryFilters(controller.signal)
+            .then(setFilters)
+            .catch((err) => {
+                if (err.name !== "AbortError") console.error(err)
+            })
+        return () => controller.abort()
+    }, [])
+
+    const fetchExercises = useCallback(async (signal?: AbortSignal) => {
+        setIsLoading(true)
+        setError(null)
+        try {
+            const data = await getExerciseLibrary({
+                page,
+                per_page: 20,
+                search: search || undefined,
+                body_part: bodyPart || undefined,
+                target: target || undefined,
+                equipment: equipment || undefined,
+            }, signal)
+            setExercises(data.items)
+            setTotalPages(data.pages)
+            setHasNext(data.has_next)
+            setHasPrev(data.has_prev)
+            setIsLoading(false)
+        } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") return
+            setError(err instanceof Error ? err.message : "Failed to load exercises")
+            setIsLoading(false)
+        } 
+    }, [page, search, bodyPart, target, equipment])
+
+    useEffect(() => {
+        const controller = new AbortController()
+        fetchExercises(controller.signal)
+        return () => controller.abort()
+    }, [fetchExercises])
+
+    const handleSearch = useCallback((value: string) => {
+        setSearch(value)
+        setPage(1)
+    }, [])
+
+    const handleFilterChange = useCallback(
+        (newFilters: { body_part?: string; target?: string; equipment?: string }) => {
+            if (newFilters.body_part !== undefined) setBodyPart(newFilters.body_part)
+            if (newFilters.target !== undefined) setTarget(newFilters.target)
+            if (newFilters.equipment !== undefined) setEquipment(newFilters.equipment)
+            setPage(1)
+        },
+        []
+    )
+
+    if (isLoading && exercises.length === 0) return (
+        <div className="flex justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
         </div>
-        <button
-          type="button"
-          className="ml-auto inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium hover:border-primary/40"
-        >
-          <Filter className="h-4 w-4 text-muted-foreground" /> Filtros
-        </button>
-      </div>
+    );
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {exercises.map((e) => (
-          <div
-            key={e.name}
-            className="card-hover overflow-hidden rounded-2xl border border-border bg-card"
-          >
-            <div className="relative h-36">
-              <img src={e.img} alt={e.name} className="h-full w-full object-cover" />
-              <div className="absolute inset-0 grid place-items-center bg-black/30 opacity-0 transition-opacity hover:opacity-100">
-                <PlayCircle className="h-10 w-10 text-white" />
-              </div>
-              <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
-                {e.group}
-              </span>
+    return (
+        <div className="mx-auto max-w-7xl">
+            <PageHeader title="Exercises" subtitle="Browse the complete exercise library" />
+
+            <div className="mb-5 space-y-4">
+                <ExerciseLibrarySearch value={search} searchKey={0} onSearch={handleSearch} />
+                <ExerciseLibraryFilters
+                    selectedBodyPart={bodyPart}
+                    selectedTarget={target}
+                    selectedEquipment={equipment}
+                    filters={filters}
+                    onChange={handleFilterChange}
+                />
             </div>
-            <div className="p-4">
-              <div className="font-semibold">{e.name}</div>
-              <div className="mt-0.5 text-xs text-muted-foreground">Compuesto · Barra</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+
+            {error && exercises.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <Search className="mb-4 h-12 w-12 text-destructive/30" aria-hidden="true" />
+                    <p className="text-sm font-medium text-destructive">{error}</p>
+                    <button
+                        onClick={() => fetchExercises()}
+                        className="mt-3 text-sm font-medium text-primary hover:underline"
+                    >
+                        Try again
+                    </button>
+                </div>
+            ) : (
+                <ExerciseLibraryGrid
+                    exercises={exercises}
+                    isLoading={isLoading}
+                    error={error}
+                    page={page}
+                    totalPages={totalPages}
+                    hasNext={hasNext}
+                    hasPrev={hasPrev}
+                    selectedIds={new Set()}
+                    onPageChange={setPage}
+                    onSelect={() => {}}
+                />
+            )}
+        </div>
+    )
 }

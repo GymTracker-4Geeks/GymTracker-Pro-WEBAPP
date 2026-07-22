@@ -1,7 +1,7 @@
 const BASE_URL: string = process.env.NEXT_PUBLIC_FLASK_API_URL || '/api'
 
 const getHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token')
+    const token = localStorage.getItem('access_token')
     return {
         'Content-Type': 'application/json',
         ...(token && { Authorization: `Bearer ${token}`})
@@ -14,9 +14,10 @@ const handleResponse = async <T>(res: Response): Promise<T> => {
     return data as T
 }
 
-export const GET = async <T>(endpoint: string): Promise<T> => {
+export const GET = async <T>(endpoint: string, signal?: AbortSignal): Promise<T> => {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
         headers: getHeaders(),
+        signal,
     })
     return handleResponse<T>(res)
 }

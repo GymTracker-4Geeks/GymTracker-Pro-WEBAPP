@@ -17,6 +17,7 @@ class WorkoutLog(db.Model):
     )
     weight: Mapped[float] = mapped_column(Float)
     reps: Mapped[int] = mapped_column()
+    sets: Mapped[int] = mapped_column()
     performed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 
         default=lambda: datetime.now(UTC)
@@ -37,6 +38,7 @@ class WorkoutLog(db.Model):
             "exercise_id": self.exercise_id,
             "weight": self.weight,
             "reps": self.reps,
+            "sets": self.sets,
             "performed_at": self.performed_at.isoformat(),
             "exercise_name": self.exercise.name if self.exercise else None
         }

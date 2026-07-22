@@ -1,12 +1,14 @@
 "use client";
 
-import { PageHeader } from "../layout";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Dumbbell, Flame, Clock, BarChart3, Plus, ChevronRight, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { BodyWeightRecord, ClientProfileExtended, RoutineProfile, TodaySummary, TrainerProfileExtended } from "@/lib/types";
 import { getDashboard } from "@/services/clientService";
 
 export default function DashboardPage() {
+    const router = useRouter();
     const [client, setClient] = useState<ClientProfileExtended | null>(null);
     const [trainer, setTrainer] = useState<TrainerProfileExtended | null>(null);
     const [bodyweight, setBodyWeight] = useState<BodyWeightRecord | null>(null);
@@ -14,7 +16,7 @@ export default function DashboardPage() {
     const [todaysummary, setTodaySummary] = useState<TodaySummary | null>(null);
     const [error, setError] = useState<string>('');
 
-    const dashboard = async () => {
+    const dashboard = async (signal?: AbortSignal) => {
         try {
             const data = await getDashboard();
             setClient(data.client);
@@ -24,6 +26,7 @@ export default function DashboardPage() {
             setBodyWeight(data.last_weight);
             
         } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") return;
             if (err instanceof Error) {
                 setError(err.message);
             } else {
@@ -33,11 +36,17 @@ export default function DashboardPage() {
     };
 
     useEffect(() => {
-        dashboard();
+        const controller = new AbortController();
+        dashboard(controller.signal);
+        return () => controller.abort();
     }, []);
 
     if (error) return <p className="p-6 text-red-500">{error}</p>;
-    if (!client) return <p className="p-6 text-muted-foreground animate-pulse">Loading...</p>;
+    if (!client) return (
+        <div className="flex justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        </div>
+    );
 
     const exercisesValue = today_routine?.exercises
         ? `${todaysummary?.completed_exercises || 0}/${today_routine.exercises.length}`
@@ -48,10 +57,13 @@ export default function DashboardPage() {
         
         <div className="mx-auto max-w-7xl px-4 py-6">
             <PageHeader
-                title={`¡Hey, ${client.full_name}! 👋`}
+                title={`Hey, ${client.full_name}! 👋`}
                 subtitle="Ready to push your limits today."
                 actions={
-                    <button className="inline-flex items-center gap-2 rounded-lg gradient-red glow-red px-4 py-2.5 text-sm font-semibold text-white">
+                    <button
+                        onClick={() => router.push("/client/workouts")}
+                        className="inline-flex items-center gap-2 rounded-lg gradient-red glow-red px-4 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    >
                         <Plus className="h-4 w-4" /> New Workout
                     </button>
                 }
@@ -126,7 +138,10 @@ export default function DashboardPage() {
                             {today_routine ? `Rutina: ${today_routine.name}` : "Today Routine"}
                         </h3>
                         {today_routine && (
-                            <button className="text-sm font-medium text-primary hover:underline">
+                            <button
+                                onClick={() => router.push("/client/routines")}
+                                className="text-sm font-medium text-primary hover:underline"
+                            >
                                 View more
                             </button>
                         )}
@@ -171,7 +186,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="mt-4 flex items-baseline gap-1">
                             <span className="text-4xl font-extrabold text-foreground tracking-tight">
-                                {bodyweight ? bodyweight.weight : "--"}
+                                {bodyweight ? bodyweight.weight : <span className="text-muted-foreground">No data</span>}
                             </span>
                             <span className="text-sm font-medium text-muted-foreground">kg</span>
                         </div>

@@ -5,34 +5,16 @@ import { Plus, Save } from "lucide-react"
 import { Input } from "@/components/ui/Input"
 import { Textarea } from "@/components/ui/Textarea"
 import { Button } from "@/components/ui/Button"
-import { Skeleton } from "@/components/ui/Skeleton"
 import { Spinner } from "@/components/ui/Spinner"
 import { Toast } from "@/components/ui/Toast"
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { RoutineExercises } from "@/components/routines/RoutineExercises"
 import { ExerciseLibraryModal } from "@/components/routines/ExerciseLibraryModal"
 import { createRoutine, editRoutine } from "@/services/routineService"
 import { addExerciseToRoutine, deleteExercise } from "@/services/exerciseService"
 import { cn } from "@/lib/utils"
+import { DEFAULT_EXERCISE_CONFIG } from "@/lib/constants"
 import type { ExerciseLibraryItem, SelectedExercise, ExerciseConfig, RoutineProfile } from "@/lib/types"
-
-const WEEK_DAYS = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-]
-
-const DEFAULT_CONFIG: ExerciseConfig = {
-    sets: 3,
-    reps: 10,
-    rir: 1,
-    restTime: 60,
-    notes: "",
-    order: 0,
-}
 
 function mapRoutineToExercises(routine: RoutineProfile): SelectedExercise[] {
     return routine.exercises.map((ex) => ({
@@ -54,36 +36,6 @@ function mapRoutineToExercises(routine: RoutineProfile): SelectedExercise[] {
     }))
 }
 
-function LoadingSkeleton() {
-    return (
-        <div className="mx-auto max-w-3xl space-y-6" aria-hidden="true">
-            <div className="rounded-2xl border border-border bg-card p-6">
-                <Skeleton className="mb-4 h-6 w-32" />
-                <div className="space-y-4">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-20 w-full" />
-                </div>
-            </div>
-            <div className="rounded-2xl border border-border bg-card p-6">
-                <Skeleton className="mb-4 h-6 w-32" />
-                <div className="flex gap-2">
-                    {Array.from({ length: 7 }).map((_, i) => (
-                        <Skeleton key={i} className="h-9 w-12" />
-                    ))}
-                </div>
-            </div>
-            <div className="rounded-2xl border border-border bg-card p-6">
-                <Skeleton className="mb-4 h-6 w-32" />
-                <div className="space-y-3">
-                    {Array.from({ length: 2 }).map((_, i) => (
-                        <Skeleton key={i} className="h-14 w-full" />
-                    ))}
-                </div>
-            </div>
-        </div>
-    )
-}
-
 interface RoutineFormProps {
     routine?: RoutineProfile
     onCancel?: () => void
@@ -94,7 +46,6 @@ export function RoutineForm({ routine, onCancel, onSaved }: RoutineFormProps) {
     const [name, setName] = useState(routine?.name ?? "")
     const [nameTouched, setNameTouched] = useState(false)
     const [description, setDescription] = useState(routine?.description ?? "")
-    const [selectedDays, setSelectedDays] = useState<string[]>([])
     const [selectedExercises, setSelectedExercises] = useState<SelectedExercise[]>(
         routine ? mapRoutineToExercises(routine) : []
     )
@@ -102,15 +53,10 @@ export function RoutineForm({ routine, onCancel, onSaved }: RoutineFormProps) {
     const [editingIndex, setEditingIndex] = useState<number | null>(null)
     const [isSaving, setIsSaving] = useState(false)
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
-
-    const toggleDay = (day: string) => {
-        setSelectedDays((prev) =>
-            prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-        )
-    }
+    const [removeExerciseIndex, setRemoveExerciseIndex] = useState<number | null>(null)
 
     const selectedExerciseIds = useMemo(
-        () => new Set(selectedExercises.map((ex) => ex.libraryExerciseId).filter(Boolean)),
+        () => new Set(selectedExercises.map((ex) => ex.libraryExerciseId).filter((id) => id != null)),
         [selectedExercises]
     )
 
@@ -128,7 +74,7 @@ export function RoutineForm({ routine, onCancel, onSaved }: RoutineFormProps) {
                 equipment: item.equipment,
                 imageUrl: item.image_url,
                 config: {
-                    ...DEFAULT_CONFIG,
+                    ...DEFAULT_EXERCISE_CONFIG,
                     order: prev.length,
                 },
             }
@@ -138,11 +84,18 @@ export function RoutineForm({ routine, onCancel, onSaved }: RoutineFormProps) {
     }, [])
 
     const handleRemove = useCallback((index: number) => {
+        setRemoveExerciseIndex(index)
+    }, [])
+
+    const handleConfirmRemove = useCallback(() => {
+        if (removeExerciseIndex === null) return
+        const index = removeExerciseIndex
         setSelectedExercises((prev) => prev.filter((_, i) => i !== index))
         setEditingIndex((current) =>
             current === index ? null : current !== null && current > index ? current - 1 : current
         )
-    }, [])
+        setRemoveExerciseIndex(null)
+    }, [removeExerciseIndex])
 
     const handleToggleEdit = useCallback((index: number) => {
         setEditingIndex((current) => (current === index ? null : index))
@@ -173,11 +126,9 @@ export function RoutineForm({ routine, onCancel, onSaved }: RoutineFormProps) {
                 const routineId = routine.id
                 await editRoutine(routineId, { name: name.trim(), description: description.trim() })
 
-                const existingIds = selectedExercises
-                    .filter((ex) => ex.exerciseId !== null)
-                    .map((ex) => ex.exerciseId as number)
+                const allOriginalIds = routine.exercises.map((ex) => ex.id)
 
-                for (const id of existingIds) {
+                for (const id of allOriginalIds) {
                     await deleteExercise(id)
                 }
 
@@ -241,34 +192,6 @@ export function RoutineForm({ routine, onCancel, onSaved }: RoutineFormProps) {
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Brief description of this routine..."
                     />
-                </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card p-6">
-                <h2 className="mb-4 text-lg font-semibold text-foreground font-display">
-                    Training days
-                </h2>
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Select training days">
-                    {WEEK_DAYS.map((day) => {
-                        const isSelected = selectedDays.includes(day)
-                        return (
-                            <button
-                                key={day}
-                                type="button"
-                                onClick={() => toggleDay(day)}
-                                aria-pressed={isSelected}
-                                aria-label={day}
-                                className={cn(
-                                    "rounded-lg border px-3 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-                                    isSelected
-                                        ? "border-primary bg-primary/15 text-primary"
-                                        : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                                )}
-                            >
-                                {day.slice(0, 3)}
-                            </button>
-                        )
-                    })}
                 </div>
             </div>
 
@@ -345,6 +268,17 @@ export function RoutineForm({ routine, onCancel, onSaved }: RoutineFormProps) {
                     onClose={() => setToast(null)}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={removeExerciseIndex !== null}
+                onClose={() => setRemoveExerciseIndex(null)}
+                onConfirm={handleConfirmRemove}
+                title="Remove exercise"
+                message={`Remove "${selectedExercises[removeExerciseIndex ?? -1]?.name ?? "this exercise"}" from this routine?`}
+                confirmLabel="Remove"
+                cancelLabel="Cancel"
+                variant="destructive"
+            />
         </div>
     )
 }

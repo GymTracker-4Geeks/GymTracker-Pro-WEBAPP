@@ -1,11 +1,11 @@
 import { GET, POST, DELETE } from "./api"
 import type { ExerciseProfile, MessageResponse } from "@/lib/types"
 
-export const getExercises = async (): Promise<ExerciseProfile> => {
-    return GET<ExerciseProfile>("/api/exercises/")
+export const getExercises = async (): Promise<ExerciseProfile[]> => {
+    return GET<ExerciseProfile[]>("/api/exercises/")
 }
 
-export interface AddExercisePayload {
+interface AddExercisePayload {
     name: string
     sets: number
     reps: number

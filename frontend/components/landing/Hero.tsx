@@ -1,4 +1,5 @@
 import { ArrowRight, Play } from 'lucide-react'
+import Link from 'next/link';
 
 const avatars: { initials: string; bg: string }[] = [
     { initials: 'DE', bg: '#374151' },
@@ -44,20 +45,13 @@ export default function Hero() {
                     </p>
 
                     <div className="mb-10 flex flex-wrap items-center gap-3">
-                        <a
-                            href="#get-started"
+                        <Link
+                            href="/auth/register"
                             className="inline-flex items-center gap-2 rounded-md bg-[#EF4444] px-5 py-2.5 text-sm font-semibold text-[#FAFAFA] transition-opacity hover:opacity-90"
                         >
                             Get Started Free
                             <ArrowRight size={16} aria-hidden="true" />
-                        </a>
-                        <a
-                            href="#demo"
-                            className="inline-flex items-center gap-2 rounded-md border border-[#27272A] bg-transparent px-5 py-2.5 text-sm font-semibold text-[#FAFAFA] transition-colors hover:bg-[#18181B]"
-                        >
-                            <Play size={14} aria-hidden="true" />
-                            Book a Demo
-                        </a>
+                        </Link>
                     </div>
 
                     <div className="mb-6 h-px w-full max-w-sm bg-[#27272A]" aria-hidden="true" />

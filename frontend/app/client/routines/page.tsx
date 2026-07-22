@@ -1,8 +1,12 @@
 "use client";
 
-import { Plus, Clock, Dumbbell, MoreHorizontal, Play } from "lucide-react";
+import { Clock, Dumbbell, Play } from "lucide-react";
 import { useEffect, useState } from "react";
-import { PageHeader } from "../layout";
+import { useRouter } from "next/navigation";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { DropdownMenu } from "@/components/ui/DropdownMenu";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { getClientRoutines } from "@/services/routineService";
 import { RoutineProfile } from "@/lib/types";
 
@@ -14,22 +18,21 @@ const fallbackImages = [
 ];
 
 export default function RoutinesPage() {
+    const router = useRouter();
     const [tab, setTab] = useState<"Assigned" | "Favorite">("Assigned");
     const [routine, setRoutine] = useState<RoutineProfile[] | null>(null);
     const [error, setError] = useState<string>('');
 
-    const routines = async () => {
+    const routines = async (signal?: AbortSignal) => {
         try {
             const data = await getClientRoutines();
-
-            if (data && Array.isArray(data)) {
-                setRoutine(data);
-            } else if (data && data.routines && Array.isArray(data.routines)) {
+            if (data && data.routines && Array.isArray(data.routines)) {
                 setRoutine(data.routines);
             } else {
                 setRoutine([]);
             }
         } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") return;
             if (err instanceof Error) {
                 setError(err.message);
             } else {
@@ -39,39 +42,24 @@ export default function RoutinesPage() {
     };
 
     useEffect(() => {
-        routines();
+        const controller = new AbortController();
+        routines(controller.signal);
+        return () => controller.abort();
     }, []);
 
     if (error) return <p className="p-6 text-red-500">{error}</p>;
-    if (!routine) return <p className="p-6 text-muted-foreground animate-pulse">Loading...</p>;
+    if (!routine) return (
+        <div className="flex justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        </div>
+    );
 
     return (
         <div className="mx-auto max-w-7xl px-4 py-6">
             <PageHeader
                 title="Routines"
                 subtitle="Organize, edit, and start your favorite routines."
-                actions={
-                    <button className="inline-flex items-center gap-2 rounded-lg gradient-red glow-red px-4 py-2.5 text-sm font-semibold text-white">
-                        <Plus className="h-4 w-4" /> Create Routine
-                    </button>
-                }
             />
-
-            <div className="mb-6 flex gap-1 rounded-lg border border-border bg-card p-1 w-fit">
-                {[
-                    { id: "Assigned", label: "My Routines" },
-                    { id: "Favorite", label: "Favorite Routines" },
-                ].map((t) => (
-                    <button
-                        key={t.id}
-                        onClick={() => setTab(t.id as "Assigned" | "Favorite")}
-                        className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${tab === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                            }`}
-                    >
-                        {t.label}
-                    </button>
-                ))}
-            </div>
 
             {routine.length > 0 ? (
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -84,9 +72,17 @@ export default function RoutinesPage() {
                                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-                                <button className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-md bg-black/40 text-white backdrop-blur-md hover:bg-black/60">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </button>
+                                <div className="absolute right-3 top-3">
+                                    <DropdownMenu
+                                        items={[
+                                            {
+                                                label: "Log Workout",
+                                                icon: <Play className="h-4 w-4" />,
+                                                onClick: () => router.push("/client/workouts"),
+                                            },
+                                        ]}
+                                    />
+                                </div>
                                 <h3 className="absolute bottom-3 left-4 right-4 text-xl font-bold text-white truncate">{r.name}</h3>
                             </div>
                             <div className="p-5 flex flex-col justify-between min-h-[160px]">
@@ -105,7 +101,10 @@ export default function RoutinesPage() {
                                         </span>
                                     </div>
                                 </div>
-                                <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg gradient-red px-4 py-2.5 text-sm font-semibold text-white transition-transform active:scale-[0.98]">
+                                <button
+                                    onClick={() => router.push("/client/workouts")}
+                                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg gradient-red px-4 py-2.5 text-sm font-semibold text-white transition-transform active:scale-[0.98]"
+                                >
                                     <Play className="h-4 w-4 fill-white" /> Start Routine
                                 </button>
                             </div>
@@ -113,9 +112,11 @@ export default function RoutinesPage() {
                     ))}
                 </div>
             ) : (
-                <div className="rounded-xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground bg-card">
-                    No routines assigned to your profile yet.
-                </div>
+                <EmptyState
+                    icon={<Dumbbell className="h-12 w-12" />}
+                    title="No routines assigned"
+                    description="No routines have been assigned to your profile yet."
+                />
             )}
         </div>
     );

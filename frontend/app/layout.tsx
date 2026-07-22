@@ -9,7 +9,7 @@ export const metadata : { title : string; description : string } = {
 
 export default function AppLayout({ children } : { children: ReactNode}) {
     return (
-        <html lang="es">
+        <html lang="en" className="scroll-smooth">
             <body className="min-h-full flex flex-col">
                 <AuthProvider>
                     {children}
