@@ -1,6 +1,5 @@
 #Frontend
 frontend/node_modules/
-frontend/public/
 frontend/dist/
 frontend/.env
 frontend/.env.production
@@ -10,9 +9,9 @@ frontend/.next/
 backend/venv/
 backend/**/__pycache__/
 backend/*.pyc
-backend/instance/
 backend/.env
-backend/*.db
+backend/instance/*
+!backend/instance/gymtracker.db
 
 #Visual
 .vscode/
