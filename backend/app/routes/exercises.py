@@ -1,11 +1,12 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import DBAPIError
 
 from app.models import Routine, Exercise
 from app.extensions import db
-from app.utils import validate_fields, validate_positive_integers, get_current_trainer, get_current_client
+from app.utils import validate_fields, validate_positive_integers, get_current_trainer, get_current_client, get_library_exercise_id
 
 exercises_bp = Blueprint("exercises", __name__)
 
@@ -23,7 +24,9 @@ def get_exercises():
     if not client and not trainer:
         return jsonify({"error": "Access denied"}), 403
     
-    exercises = db.session.scalars(select(Exercise)).all()
+    exercises = db.session.scalars(
+        select(Exercise).options(selectinload(Exercise.library_exercise))
+    ).all()
 
     return jsonify([exercise.to_dict() for exercise in exercises])
 
@@ -79,7 +82,8 @@ def create_routine_exercise(routine_id):
             sets=int(data.get("sets")),
             reps=int(data.get("reps")),
             muscle_group=str(data.get("muscle_group")).strip(),
-            routine_id=routine_id
+            routine_id=routine_id,
+            library_exercise_id=get_library_exercise_id(str(data.get("name")).strip())
         )
 
         db.session.add(exercise)

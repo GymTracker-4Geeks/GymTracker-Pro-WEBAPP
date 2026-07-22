@@ -31,7 +31,7 @@ export default function Hero() {
                 <div className="max-w-2xl">
                     <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#27272A] bg-[#18181B]/80 px-3 py-1.5">
                         <span className="h-2 w-2 rounded-full bg-[#EF4444]" aria-hidden="true" />
-                        <span className="text-xs font-medium text-[#FAFAFA]">GymTracker Pro v2.0 is live</span>
+                        <span className="text-xs font-medium text-[#FAFAFA]">GymTracker Pro v1.0 is live</span>
                     </div>
 
                     <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-[#FAFAFA] text-balance sm:text-5xl lg:text-6xl">

@@ -222,6 +222,7 @@ export interface ExerciseProfile {
     muscle_group: string;
     routine_id: number;
     fav: boolean;
+    image_url: string | null;
 }
 ///////////////////////////////////////
 //     Exercise Library Service      //

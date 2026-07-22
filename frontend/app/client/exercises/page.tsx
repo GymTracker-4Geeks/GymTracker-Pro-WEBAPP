@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Star } from "lucide-react";
+import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -15,7 +15,6 @@ export default function ExercisesPage() {
     const [exercises, setExercises] = useState<ExerciseProfile[] | null>(null);
     const [error, setError] = useState<string>('');
     const [search, setSearch] = useState("");
-    const [favs, setFavs] = useState<Record<string, boolean>>({});
 
     const handleExercises = async (signal?: AbortSignal) => {
         try {
@@ -53,7 +52,7 @@ export default function ExercisesPage() {
 
     return (
         <div className="mx-auto max-w-7xl">
-            <PageHeader title="Exercises" subtitle="Explore the complete library of exercises." />
+            <PageHeader title="Exercises" subtitle="Explore your assigned exercises" />
 
             <div className="mb-6 flex flex-wrap gap-3">
                 <div className="relative flex-1 min-w-[260px]">
@@ -90,25 +89,28 @@ export default function ExercisesPage() {
                 />
             ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {filtered.map((ex) => {
-                        const fav = favs[ex.name];
-                        return (
-                            <div key={ex.name} className="card-hover group overflow-hidden rounded-xl border border-border bg-card">
-                                <div className="relative h-36 overflow-hidden">
-                                    <button
-                                        onClick={() => setFavs((p) => ({ ...p, [ex.name]: !fav }))}
-                                        className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-md bg-black/40 backdrop-blur-md"
-                                    >
-                                        <Star className={`h-4 w-4 ${fav ? "fill-primary text-primary" : "text-white"}`} />
-                                    </button>
-                                </div>
-                                <div className="p-4">
-                                    <div className="truncate font-semibold">{ex.name}</div>
-                                    <div className="text-xs font-medium text-primary">{ex.muscle_group}</div>
-                                </div>
+                    {filtered.map((ex) => (
+                        <div key={ex.id} className="card-hover group overflow-hidden rounded-xl border border-border bg-card">
+                            <div className="relative h-36 overflow-hidden bg-secondary">
+                                {ex.image_url ? (
+                                    <img
+                                        src={ex.image_url}
+                                        alt={ex.name}
+                                        className="h-full w-full object-cover"
+                                        loading="lazy"
+                                    />
+                                ) : (
+                                    <div className="flex h-full items-center justify-center text-muted-foreground/30">
+                                        <Search className="h-8 w-8" />
+                                    </div>
+                                )}
                             </div>
-                        );
-                    })}
+                            <div className="p-4">
+                                <div className="truncate font-semibold capitalize">{ex.name}</div>
+                                <div className="mt-1 text-xs font-medium text-primary">{ex.muscle_group}</div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>

@@ -7,7 +7,7 @@ from sqlalchemy.exc import DBAPIError
 from app.services.dashboard_service import get_today_routine
 from app.models import Client, ClientRoutine, Routine, Trainer, Exercise
 from app.extensions import db
-from app.utils import validate_fields, validate_positive_integers, get_current_client, get_current_trainer
+from app.utils import validate_fields, validate_positive_integers, get_current_client, get_current_trainer, get_library_exercise_id
 
 routines_bp = Blueprint("routines", __name__)
 
@@ -129,7 +129,8 @@ def create_routine():
             name=str(exercise_data.get("name")).strip(),
             sets=int(exercise_data.get("sets")),
             reps=int(exercise_data.get("reps")),
-            muscle_group=str(exercise_data.get("muscle_group", "General")).strip()            
+            muscle_group=str(exercise_data.get("muscle_group", "General")).strip(),
+            library_exercise_id=get_library_exercise_id(str(exercise_data.get("name")).strip())
         )
         routine.exercises.append(new_exercise)
 

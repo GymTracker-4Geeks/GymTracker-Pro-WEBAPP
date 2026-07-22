@@ -1,6 +1,6 @@
-from sqlalchemy import select
+from sqlalchemy import select, func
 
-from app.models import Client, Trainer
+from app.models import Client, Trainer, ExerciseLibrary
 from app.extensions import db
 
 def validate_fields(data, fields):
@@ -31,3 +31,12 @@ def get_current_trainer(user_id):
     return db.session.scalar(
         select(Trainer).where(Trainer.user_id == user_id)
     )
+
+def get_library_exercise_id(exercise_name):
+    """Find the ExerciseLibrary id matching the given exercise name."""
+    match = db.session.scalar(
+        select(ExerciseLibrary).where(
+            func.lower(ExerciseLibrary.name) == func.lower(exercise_name)
+        )
+    )
+    return match.id if match else None

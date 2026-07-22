@@ -38,5 +38,6 @@ class Exercise(db.Model):
             "reps": self.reps,
             "muscle_group": self.muscle_group,
             "routine_id": self.routine_id,
-            "library_exercise_id": self.library_exercise_id
+            "library_exercise_id": self.library_exercise_id,
+            "image_url": self.library_exercise.image_url if self.library_exercise else None
         }
