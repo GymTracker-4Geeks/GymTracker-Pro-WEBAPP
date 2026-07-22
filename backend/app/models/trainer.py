@@ -1,0 +1,40 @@
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey, String
+from typing import List, Optional
+
+from app.extensions import db
+
+class Trainer(db.Model):
+    __tablename__ = "trainers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        unique=True
+    )
+    specialty: Mapped[Optional[str]] = mapped_column(String(255))
+
+    user: Mapped["User"] = relationship(
+        back_populates="trainer"
+    )
+
+    clients: Mapped[List["Client"]] = relationship(
+        back_populates="trainer"
+    )
+
+    routines: Mapped[List["Routine"]] = relationship(
+        back_populates="trainer",
+        cascade="all, delete-orphan"
+    )
+
+    sessions: Mapped[List["Session"]] = relationship(
+        back_populates="trainer", 
+        cascade="all, delete-orphan"
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "specialty": self.specialty if self.specialty else None
+        }
