@@ -214,6 +214,16 @@ export interface CreateRoutineResponse {
 //////////////////////////////////
 //       Exercise Service       //
 //////////////////////////////////
+export interface ExerciseLibraryInfo {
+    id: number;
+    name: string;
+    image_url: string;
+    gif_url: string;
+    body_part: string;
+    target: string;
+    equipment: string;
+}
+
 export interface ExerciseProfile {
     id: number;
     name: string;
@@ -221,8 +231,8 @@ export interface ExerciseProfile {
     reps: number;
     muscle_group: string;
     routine_id: number;
-    fav: boolean;
     image_url: string | null;
+    exercise_library: ExerciseLibraryInfo | null;
 }
 ///////////////////////////////////////
 //     Exercise Library Service      //

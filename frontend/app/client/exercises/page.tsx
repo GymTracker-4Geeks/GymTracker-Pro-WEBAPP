@@ -92,7 +92,14 @@ export default function ExercisesPage() {
                     {filtered.map((ex) => (
                         <div key={ex.id} className="card-hover group overflow-hidden rounded-xl border border-border bg-card">
                             <div className="relative h-36 overflow-hidden bg-secondary">
-                                {ex.image_url ? (
+                                {ex.exercise_library?.image_url ? (
+                                    <img
+                                        src={ex.exercise_library.image_url}
+                                        alt={ex.exercise_library.name}
+                                        className="h-full w-full object-cover"
+                                        loading="lazy"
+                                    />
+                                ) : ex.image_url ? (
                                     <img
                                         src={ex.image_url}
                                         alt={ex.name}
@@ -106,8 +113,12 @@ export default function ExercisesPage() {
                                 )}
                             </div>
                             <div className="p-4">
-                                <div className="truncate font-semibold capitalize">{ex.name}</div>
-                                <div className="mt-1 text-xs font-medium text-primary">{ex.muscle_group}</div>
+                                <div className="truncate font-semibold capitalize">
+                                    {ex.exercise_library?.name ?? ex.name}
+                                </div>
+                                <div className="mt-1 text-xs font-medium text-primary">
+                                    {ex.exercise_library?.body_part ?? ex.muscle_group}
+                                </div>
                             </div>
                         </div>
                     ))}

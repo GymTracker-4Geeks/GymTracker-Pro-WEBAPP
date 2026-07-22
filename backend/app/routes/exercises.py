@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import DBAPIError
 
-from app.models import Routine, Exercise
+from app.models import Routine, Exercise, ClientRoutine
 from app.extensions import db
 from app.utils import validate_fields, validate_positive_integers, get_current_trainer, get_current_client, get_library_exercise_id
 
@@ -23,10 +23,25 @@ def get_exercises():
 
     if not client and not trainer:
         return jsonify({"error": "Access denied"}), 403
-    
-    exercises = db.session.scalars(
-        select(Exercise).options(selectinload(Exercise.library_exercise))
-    ).all()
+
+    if client:
+        client_routines = db.session.scalars(
+            select(ClientRoutine).where(ClientRoutine.client_id == client.id)
+        ).all()
+
+        if not client_routines:
+            return jsonify([]), 200
+
+        routine_ids = [cr.routine_id for cr in client_routines]
+        exercises = db.session.scalars(
+            select(Exercise)
+            .where(Exercise.routine_id.in_(routine_ids))
+            .options(selectinload(Exercise.library_exercise))
+        ).all()
+    else:
+        exercises = db.session.scalars(
+            select(Exercise).options(selectinload(Exercise.library_exercise))
+        ).all()
 
     return jsonify([exercise.to_dict() for exercise in exercises])
 
