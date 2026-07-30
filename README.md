@@ -1,9 +1,29 @@
+<p align="center">
+<img src="assets/app-banner.png"/>
+</p>
+
 # 🏋️ GymTracker Pro
 
 <p align="center">
   <strong>A modern Full Stack web application for gym management.</strong><br>
   Designed for <strong>Trainers</strong>, <strong>Clients</strong> and <strong>Administrators</strong>.
 </p>
+
+---
+  
+<p align="center">
+
+<a href="https://gym-tracker-pro-beta.vercel.app">
+<img src="https://img.shields.io/badge/🚀_Live_Demo-28a745?style=for-the-badge"/>
+</a>
+
+<a href="https://github.com/GymTracker-4Geeks/GymTracker-Pro-WEBAPP">
+<img src="https://img.shields.io/badge/📂_Repository-181717?style=for-the-badge"/>
+</a>
+
+</p>
+
+---
 
 <p align="center">
 
@@ -21,9 +41,9 @@
 
 ## 📖 Overview
 
-GymTracker Pro is a Full Stack web application developed as a final Bootcamp project.
+GymTracker Pro is a Full Stack fitness management platform built as my final Bootcamp project.
 
-It provides a complete platform where trainers can manage clients, create workout routines and assign them, while clients can track workouts, monitor body weight and visualize their progress.
+It enables trainers to manage clients, create and assign workout routines, while allowing clients to track workouts, body weight, and progress through a modern and responsive interface.
 
 The application follows a clean architecture using **Next.js** for the frontend and **Flask** for the backend, implementing secure authentication with JWT and password recovery through SendGrid.
 
@@ -104,7 +124,7 @@ The application follows a clean architecture using **Next.js** for the frontend 
 
 - Next.js (App Router)
 - React
-- JavaScript
+- TypeScript
 - Tailwind CSS
 - Lucide React
 
@@ -113,10 +133,10 @@ The application follows a clean architecture using **Next.js** for the frontend 
 ## Backend
 
 - Flask
-- Flask SQLAlchemy
-- Flask JWT Extended
-- Flask Migrate
-- Flask CORS
+- Flask-SQLAlchemy
+- Flask-JWT-Extended
+- Flask-Migrate
+- Flask-CORS
 
 ---
 
@@ -309,7 +329,7 @@ SECRET_KEY=
 
 JWT_SECRET_KEY=
 
-DATABASE_URL=
+DATABASE_URI=
 
 SENDGRID_API_KEY=
 
@@ -402,9 +422,7 @@ Including:
 
 ---
 
-# 🛣 Roadmap
-
-Future improvements:
+# 🛣 Future improvements
 
 - PostgreSQL support
 - Nutrition module
@@ -418,15 +436,27 @@ Future improvements:
 
 ---
 
-# 🌐 Demo
-
-Coming soon...
-
----
-
 # 📸 Screenshots
 
-Coming soon...
+### Landing Page
+
+<img src="assets/landing.png" width="900"/>
+
+### Trainer Dashboard
+
+<img src="assets/trainer-dashboard.png" width="900"/>
+
+### Routines Page
+
+<img src="assets/routines-page.png" width="900"/>
+
+### Routine Builder
+
+<img src="assets/routines-create.png" width="900"/>
+
+### Routine Builder Exercises
+
+<img src="assets/routines-exercises.png" width="900"/>
 
 ---
 
@@ -434,7 +464,21 @@ Coming soon...
 
 **David Evora**
 
-Final Full Stack Bootcamp Project
+- LinkedIn: https://linkedin.com/in/davidevora
+- GitHub: https://github.com/DavidEvora
+
+---
+
+# 📚 What I Learned
+
+Developing GymTracker Pro allowed me to gain practical experience in:
+
+- Designing a scalable Full Stack architecture.
+- Building REST APIs with Flask.
+- JWT Authentication and Role-Based Authorization.
+- SQLAlchemy relationships and database migrations.
+- Deploying production applications on Render and Vercel.
+- Managing environment variables and production configuration.
 
 ---
 
